@@ -1,3 +1,19 @@
+Package: com.hx.120
+Version: 2.0
+Architecture: iphoneos-arm64e
+Maintainer: 半生年华
+Installed-Size: 168
+Depends: mobilesubstrate
+Filename: debs/com.hx.120_2.0_iphoneos-arm64e-3.deb
+Size: 4890
+MD5sum: 7722f434d4fd99ea2c3c33f825dd5f0b
+SHA1: d1b20dda2113dff9278dc39e01dbbc99f2e20b92
+SHA256: a78466680ae31337afd03d8025d36158bbd25a18e30893ec8de8cf5cd6554600
+Section: Tweaks
+Description: 满血120HZ，qq172942805
+Author: 半生年华
+Name: MotionX
+
 Package: repo.lfjb.baiduciku
 Version: 1.0
 Architecture: iphoneos-arm64
