@@ -1,0 +1,16 @@
+Package: repo.lfjb.baiduciku
+Version: 1.0
+Architecture: iphoneos-arm64
+Maintainer: LF
+Depends: firmware (>= 15.0), mobilesubstrate
+Filename: debs/百度词库-1.0.deb
+Size: 10231780
+MD5sum: 4bd9743fa0694e4eacc24e411c3c1a55
+SHA1: af15a769957bb11c2f2639535cd71ef7f60e8357
+SHA256: 03bcb826e677013f3ac8653d5358d6adff29f25a137e2753d90a3f75ef6c9ba6
+Section: Systems系统
+Description: 将系统默认词库替换为某人制作的百度词库，显著提升系统自带输入法的智能度！让系统键盘再次伟大！
+Author: 百度
+Icon: https://raw.githubusercontent.com/ichitaso/HideKBSettings/master/Preferences/Resources/icon%403x.png
+Name: 百度词库
+
