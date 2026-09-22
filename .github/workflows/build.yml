@@ -4,19 +4,18 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "debs/**"
+  workflow_dispatch:
 
-workflow_dispatch:
 permissions:
   contents: write
 
 jobs:
   build:
+    name: Build Packages
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install dpkg-dev
@@ -26,14 +25,20 @@ jobs:
 
       - name: Build Packages
         run: |
-          dpkg-scanpackages -m ./debs /dev/null > Packages
+          dpkg-scanpackages -m debs /dev/null > Packages
           gzip -kf Packages
           bzip2 -kf Packages
 
-      - name: Commit
+      - name: Commit Packages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add Packages Packages.gz Packages.bz2
-          git diff --cached --quiet || git commit -m "Update Packages"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update package index"
+            git push
+          fi
