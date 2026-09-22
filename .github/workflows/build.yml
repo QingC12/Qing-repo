@@ -1,4 +1,4 @@
-name: Build Jailbreak Repo
+name: Build Repo
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
 
@@ -17,55 +16,97 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dpkg
+      - name: Install dpkg-dev
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
 
-      - name: Prepare repo
+      - name: Build repository
         run: |
           rm -rf repo
           mkdir -p repo/debs
 
-          find . -maxdepth 2 -type f -name "*.deb" -exec cp {} repo/debs/ \;
+          find . -type f -name "*.deb" -not -path "./repo/*" -exec cp {} repo/debs/ \;
 
-          echo "DEB files:"
-          ls -lh repo/debs
+          if [ -f "CydiaIcon.png" ]; then
+            cp "CydiaIcon.png" "repo/CydiaIcon.png"
+          fi
 
-      - name: Generate Packages
-        run: |
           cd repo
 
           dpkg-scanpackages -m debs /dev/null > Packages
 
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("Packages")
+          text = path.read_text(encoding="utf-8")
+
+          blocks = text.split("\n\n")
+          new_blocks = []
+
+          remove_fields = {
+              "depiction",
+              "sileodepiction",
+              "nativedepiction",
+              "icon",
+              "homepage",
+          }
+
+          for block in blocks:
+              if not block.strip():
+                  continue
+
+              lines = block.splitlines()
+              result = []
+              section_found = False
+
+              for line in lines:
+                  if ":" not in line:
+                      result.append(line)
+                      continue
+
+                  field, value = line.split(":", 1)
+                  field_lower = field.strip().lower()
+
+                  if field_lower in remove_fields:
+                      continue
+
+                  if field_lower == "section":
+                      result.append("Section: 插件")
+                      section_found = True
+                  else:
+                      result.append(line)
+
+              if not section_found:
+                  result.append("Section: 插件")
+
+              new_blocks.append("\n".join(result))
+
+          path.write_text(
+              "\n\n".join(new_blocks) + "\n\n",
+              encoding="utf-8"
+          )
+          PY
+
           gzip -9 -c Packages > Packages.gz
-
-          echo "Packages generated:"
-          cat Packages
-
-      - name: Generate Release
-        run: |
-          cd repo
 
           cat > Release <<'EOF'
           Origin: Qing Repo
-          Label: 清晨
+          Label: Qing Repo
           Suite: stable
           Version: 1.0
           Codename: stable
-          Architectures: iphoneos-arm64e
+          Architectures: iphoneos-arm64
           Components: main
-          Description: 清晨ios越狱源，仅自用备份，大部分支持Roothide，arm64e版本
+          Description: Qing iOS Jailbreak Repository
           EOF
 
-      - name: Create nojekyll
-        run: |
-          touch repo/.nojekyll
+          touch .nojekyll
 
-      - name: Deploy to gh-pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./repo
           publish_branch: gh-pages
-          force_orphan: true

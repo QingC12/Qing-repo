@@ -1,0 +1,83 @@
+name: Test DEB Clean
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
+
+      - name: Test original package
+        run: |
+          echo "===== 原始 DEB 信息 ====="
+          dpkg-deb -f debs/com.autoscroll.jb_1.0.0_arm64e.deb
+
+      - name: Extract package
+        run: |
+          mkdir -p test/original
+          dpkg-deb -R \
+            debs/com.autoscroll.jb_1.0.0_arm64e.deb \
+            test/original
+
+      - name: Clean control metadata
+        run: |
+          CONTROL="test/original/DEBIAN/control"
+
+          echo "===== 原始 control ====="
+          cat "$CONTROL"
+
+          sed -i '/^[Dd]epiction:/d' "$CONTROL"
+          sed -i '/^[Ss]ileo[Dd]epiction:/d' "$CONTROL"
+          sed -i '/^[Nn]ative[Dd]epiction:/d' "$CONTROL"
+          sed -i '/^[Ii]con:/d' "$CONTROL"
+          sed -i '/^[Hh]omepage:/d' "$CONTROL"
+
+          sed -i 's/^Section:.*/Section: 插件/' "$CONTROL"
+
+          if ! grep -qi '^Section:' "$CONTROL"; then
+            printf '\nSection: 插件\n' >> "$CONTROL"
+          fi
+
+          echo "===== 清理后的 control ====="
+          cat "$CONTROL"
+
+      - name: Rebuild package
+        run: |
+          mkdir -p test/output
+
+          dpkg-deb -b \
+            test/original \
+            test/output/com.autoscroll.jb_1.0.0_arm64e-clean.deb
+
+      - name: Verify rebuilt package
+        run: |
+          echo "===== 重新打包后的 DEB ====="
+          dpkg-deb -f \
+            test/output/com.autoscroll.jb_1.0.0_arm64e-clean.deb
+
+          echo ""
+          echo "===== 检查是否还有原来源字段 ====="
+
+          if dpkg-deb -f \
+            test/output/com.autoscroll.jb_1.0.0_arm64e-clean.deb \
+            | grep -iE 'depiction|homepage|^icon:'; then
+            echo "发现原来源字段"
+            exit 1
+          else
+            echo "原来源字段已清除"
+          fi
+
+      - name: Upload test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleaned-deb-test
+          path: test/output/*.deb
