@@ -53,9 +53,9 @@ jobs:
           Suite: stable
           Version: 1.0
           Codename: stable
-          Architectures: iphoneos-arm64
+          Architectures: iphoneos-arm64e
           Components: main
-          Description: Qing iOS Jailbreak Repository
+          Description: 清晨ios越狱源
           EOF
 
       - name: Create nojekyll
