@@ -1,4 +1,4 @@
-name: Build Repo
+name: Build Jailbreak Repo
 
 on:
   push:
@@ -6,39 +6,59 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
   build:
-    name: Build Packages
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dpkg-dev
+      - name: Install dpkg
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
 
-      - name: Build Packages
+      - name: Prepare repo
         run: |
+          mkdir -p repo/debs
+
+          find . -maxdepth 2 -name "*.deb" -exec cp {} repo/debs/ \;
+
+          echo "Found deb files:"
+          ls -lh repo/debs
+
+      - name: Generate Packages
+        run: |
+          cd repo
           dpkg-scanpackages -m debs /dev/null > Packages
           gzip -kf Packages
-          bzip2 -kf Packages
 
-      - name: Commit Packages
+          echo "Generated files:"
+          ls -lh
+
+      - name: Generate Release
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cd repo
 
-          git add Packages Packages.gz Packages.bz2
+          cat > Release <<'EOF'
+          Origin: My Jailbreak Repo
+          Label: My Jailbreak Repo
+          Suite: stable
+          Version: 1.0
+          Codename: stable
+          Architectures: iphoneos-arm64
+          Components: main
+          Description: My iOS Jailbreak Repository
+          EOF
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update package index"
-            git push
-          fi
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          publish_branch: gh-pages
+          force_orphan: true
