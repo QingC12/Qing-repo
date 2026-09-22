@@ -24,36 +24,43 @@ jobs:
 
       - name: Prepare repo
         run: |
+          rm -rf repo
           mkdir -p repo/debs
 
-          find . -maxdepth 2 -name "*.deb" -exec cp {} repo/debs/ \;
+          find . -maxdepth 2 -type f -name "*.deb" -exec cp {} repo/debs/ \;
 
-          echo "Found deb files:"
+          echo "DEB files:"
           ls -lh repo/debs
 
       - name: Generate Packages
         run: |
           cd repo
-          dpkg-scanpackages -m debs /dev/null > Packages
-          gzip -kf Packages
 
-          echo "Generated files:"
-          ls -lh
+          dpkg-scanpackages -m debs /dev/null > Packages
+
+          gzip -9 -c Packages > Packages.gz
+
+          echo "Packages generated:"
+          cat Packages
 
       - name: Generate Release
         run: |
           cd repo
 
           cat > Release <<'EOF'
-          Origin: My Jailbreak Repo
-          Label: My Jailbreak Repo
+          Origin: Qing Repo
+          Label: Qing Repo
           Suite: stable
           Version: 1.0
           Codename: stable
           Architectures: iphoneos-arm64
           Components: main
-          Description: My iOS Jailbreak Repository
+          Description: Qing iOS Jailbreak Repository
           EOF
+
+      - name: Create nojekyll
+        run: |
+          touch repo/.nojekyll
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
