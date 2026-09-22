@@ -6,11 +6,12 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -21,92 +22,94 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
 
-      - name: Build repository
+      - name: Prepare repository
         run: |
-          rm -rf repo
+          rm -rf repo work
           mkdir -p repo/debs
+          mkdir -p work
 
-          find . -type f -name "*.deb" -not -path "./repo/*" -exec cp {} repo/debs/ \;
+      - name: Clean and rebuild DEB packages
+        shell: bash
+        run: |
+          set -e
 
-          if [ -f "CydiaIcon.png" ]; then
-            cp "CydiaIcon.png" "repo/CydiaIcon.png"
-          fi
+          find . -type f -name "*.deb" \
+            -not -path "./repo/*" \
+            -not -path "./work/*" \
+            -print0 | while IFS= read -r -d '' deb; do
 
+            name="$(basename "$deb")"
+            pkgdir="work/${name%.deb}"
+
+            echo "========================================"
+            echo "处理: $name"
+            echo "========================================"
+
+            rm -rf "$pkgdir"
+            mkdir -p "$pkgdir"
+
+            dpkg-deb -R "$deb" "$pkgdir"
+
+            control="$pkgdir/DEBIAN/control"
+
+            if [ -f "$control" ]; then
+
+              # 删除第三方来源的 Depiction 信息
+              sed -i '/^[Dd]epiction:/d' "$control"
+              sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
+              sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
+
+              # 删除原来源网页入口
+              sed -i '/^[Hh]omepage:/d' "$control"
+
+              # 保留 Icon，不删除插件图标
+
+              # 统一分类
+              if grep -qi '^Section:' "$control"; then
+                sed -i 's/^Section:.*/Section: 插件/' "$control"
+              else
+                printf '\nSection: 插件\n' >> "$control"
+              fi
+
+            fi
+
+            output="repo/debs/$name"
+
+            rm -f "$output"
+            dpkg-deb -b "$pkgdir" "$output" >/dev/null
+
+            echo "完成: $output"
+          done
+
+      - name: Build Packages
+        run: |
           cd repo
 
           dpkg-scanpackages -m debs /dev/null > Packages
 
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("Packages")
-          text = path.read_text(encoding="utf-8")
-
-          blocks = text.split("\n\n")
-          new_blocks = []
-
-          remove_fields = {
-              "depiction",
-              "sileodepiction",
-              "nativedepiction",
-              "icon",
-              "homepage",
-          }
-
-          for block in blocks:
-              if not block.strip():
-                  continue
-
-              lines = block.splitlines()
-              result = []
-              section_found = False
-
-              for line in lines:
-                  if ":" not in line:
-                      result.append(line)
-                      continue
-
-                  field, value = line.split(":", 1)
-                  field_lower = field.strip().lower()
-
-                  if field_lower in remove_fields:
-                      continue
-
-                  if field_lower == "section":
-                      result.append("Section: 插件")
-                      section_found = True
-                  else:
-                      result.append(line)
-
-              if not section_found:
-                  result.append("Section: 插件")
-
-              new_blocks.append("\n".join(result))
-
-          path.write_text(
-              "\n\n".join(new_blocks) + "\n\n",
-              encoding="utf-8"
-          )
-          PY
-
-          gzip -9 -c Packages > Packages.gz
+          gzip -9 -f Packages
 
           cat > Release <<'EOF'
           Origin: Qing Repo
-          Label: Qing Repo
+          Label: 清晨源
           Suite: stable
           Version: 1.0
           Codename: stable
-          Architectures: iphoneos-arm64
+          Architectures: iphoneos-arm64 iphoneos-arm64e
           Components: main
           Description: Qing iOS Jailbreak Repository
           EOF
 
           touch .nojekyll
 
-      - name: Deploy to GitHub Pages
+          if [ -f ../CydiaIcon.png ]; then
+            cp ../CydiaIcon.png CydiaIcon.png
+          fi
+
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./repo
           publish_branch: gh-pages
+          force_orphan: true
