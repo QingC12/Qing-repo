@@ -33,6 +33,8 @@ jobs:
         run: |
           set -e
 
+          export SOURCE_DATE_EPOCH=0
+
           find . -type f -name "*.deb" \
             -not -path "./repo/*" \
             -not -path "./work/*" \
@@ -54,17 +56,12 @@ jobs:
 
             if [ -f "$control" ]; then
 
-              # 删除第三方来源的 Depiction 信息
               sed -i '/^[Dd]epiction:/d' "$control"
               sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
               sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
 
-              # 删除原来源网页入口
               sed -i '/^[Hh]omepage:/d' "$control"
 
-              # 保留 Icon，不删除插件图标
-
-              # 统一分类
               if grep -qi '^Section:' "$control"; then
                 sed -i 's/^Section:.*/Section: 插件/' "$control"
               else
@@ -76,22 +73,32 @@ jobs:
             output="repo/debs/$name"
 
             rm -f "$output"
-            dpkg-deb -b "$pkgdir" "$output" >/dev/null
+
+            dpkg-deb \
+              --build \
+              --root-owner-group \
+              "$pkgdir" \
+              "$output"
 
             echo "完成: $output"
           done
 
       - name: Build Packages
+        shell: bash
         run: |
+          set -e
+
           cd repo
+
+          rm -f Packages Packages.gz
 
           dpkg-scanpackages -m debs /dev/null > Packages
 
-          gzip -9 -f Packages
+          gzip -9 -n -f Packages
 
           cat > Release <<'EOF'
           Origin: Qing Repo
-          Label: 清晨源
+          Label: Qing Repo
           Suite: stable
           Version: 1.0
           Codename: stable
@@ -105,6 +112,34 @@ jobs:
           if [ -f ../CydiaIcon.png ]; then
             cp ../CydiaIcon.png CydiaIcon.png
           fi
+
+      - name: Verify package sizes
+        shell: bash
+        run: |
+          set -e
+
+          cd repo
+
+          echo "===== 检查 Packages 文件大小 ====="
+
+          while IFS= read -r package; do
+            filename=$(echo "$package" | sed -n 's/^Filename: //p')
+            expected=$(echo "$package" | sed -n 's/^Size: //p')
+
+            if [ -n "$filename" ] && [ -n "$expected" ]; then
+              actual=$(stat -c%s "$filename")
+
+              if [ "$expected" != "$actual" ]; then
+                echo "错误:"
+                echo "$filename"
+                echo "Packages: $expected"
+                echo "实际:     $actual"
+                exit 1
+              fi
+            fi
+          done < <(awk 'BEGIN{RS=""} {print}' Packages)
+
+          echo "所有 DEB 文件大小检查通过"
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
