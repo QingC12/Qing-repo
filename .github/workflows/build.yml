@@ -1,75 +1,128 @@
 name: Build Qing Repo
+
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Install dpkg-dev
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
+
       - name: Clean and rebuild DEB packages
         run: |
           set -e
+
           export SOURCE_DATE_EPOCH=0
+
+          rm -rf work repo
+          mkdir -p work repo/debs
+
           find . -type f -name "*.deb" \
             -not -path "./repo/*" \
             -not -path "./work/*" \
             -print0 | while IFS= read -r -d '' deb; do
+
             name="$(basename "$deb")"
             pkgdir="work/${name%.deb}"
+            output="repo/debs/$name"
+
             echo "========================================"
             echo "处理: $name"
             echo "========================================"
+
             rm -rf "$pkgdir"
             mkdir -p "$pkgdir"
+
+            # 解包
             dpkg-deb -R "$deb" "$pkgdir"
-            # 修复 Debian 维护脚本权限
-            if [ -d "$pkgdir/DEBIAN" ]; then
-              chmod 755 "$pkgdir/DEBIAN/"* 2>/dev/null || true
-            fi
+
             control="$pkgdir/DEBIAN/control"
+
             if [ -f "$control" ]; then
-              # 删除第三方源的页面/跳转信息
+
+              # 确保 control 文件最后存在换行符
+              sed -i -e '$a\' "$control"
+
+              # 删除第三方源页面跳转信息
               sed -i '/^[Dd]epiction:/d' "$control"
               sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
               sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
               sed -i '/^[Hh]omepage:/d' "$control"
+
               # 统一分类
               if grep -qi '^Section:' "$control"; then
                 sed -i 's/^Section:.*/Section: 插件/' "$control"
               else
-                printf '\nSection: 插件\n' >> "$control"
+                printf 'Section: 插件\n' >> "$control"
               fi
+
+              # 再次确保 control 文件以换行结束
+              sed -i -e '$a\' "$control"
+
             fi
-            output="repo/debs/$name"
-            mkdir -p repo/debs
+
+            # 修复 Debian 维护脚本权限
+            if [ -d "$pkgdir/DEBIAN" ]; then
+
+              for script in \
+                preinst \
+                postinst \
+                prerm \
+                postrm \
+                config \
+                templates; do
+
+                if [ -f "$pkgdir/DEBIAN/$script" ]; then
+                  chmod 755 "$pkgdir/DEBIAN/$script"
+                fi
+
+              done
+
+            fi
+
+            # 重新打包
             rm -f "$output"
+
             dpkg-deb \
               --build \
               --root-owner-group \
               "$pkgdir" \
               "$output"
+
             echo "完成: $output"
+
           done
+
       - name: Build Packages index
         run: |
           set -e
+
           cd repo
+
           dpkg-scanpackages -m debs /dev/null > Packages
+
           gzip -9 -n -f Packages
+
       - name: Create Release
         run: |
           set -e
+
           cd repo
+
           cat > Release <<'EOF'
           Origin: Qing Repo
           Label: Qing Repo
@@ -80,36 +133,78 @@ jobs:
           Components: main
           Description: Qing iOS Jailbreak Repository
           EOF
+
       - name: Create .nojekyll
         run: |
           touch repo/.nojekyll
+
       - name: Copy CydiaIcon
         run: |
           if [ -f CydiaIcon.png ]; then
             cp CydiaIcon.png repo/CydiaIcon.png
           fi
+
       - name: Verify package sizes
         run: |
           set -e
+
           cd repo
+
           gzip -dc Packages.gz > Packages
-          while IFS= read -r line; do
-            if [[ "$line" == Filename:* ]]; then
-              file="${line#Filename: }"
-              next=$(grep -A1 -F "$line" Packages | tail -1)
-              if [[ "$next" == Size:* ]]; then
-                expected="${next#Size: }"
-                actual=$(stat -c%s "$file")
-                if [ "$expected" != "$actual" ]; then
-                  echo "ERROR: $file"
-                  echo "Expected size: $expected"
-                  echo "Actual size:   $actual"
-                  exit 1
-                fi
-              fi
-            fi
-          done < Packages
-          echo "所有软件包大小验证通过"
+
+          python3 - <<'PY'
+          import os
+          import re
+
+          packages_file = "Packages"
+
+          with open(packages_file, "r", encoding="utf-8", errors="replace") as f:
+              data = f.read()
+
+          entries = data.strip().split("\n\n")
+
+          total = 0
+          checked = 0
+          failed = 0
+
+          for entry in entries:
+              filename = re.search(r"^Filename:\s*(.+)$", entry, re.MULTILINE)
+              size = re.search(r"^Size:\s*(\d+)$", entry, re.MULTILINE)
+
+              if not filename or not size:
+                  continue
+
+              total += 1
+
+              path = filename.group(1).strip()
+              expected = int(size.group(1))
+
+              if not os.path.isfile(path):
+                  print("ERROR: 文件不存在:", path)
+                  failed += 1
+                  continue
+
+              actual = os.path.getsize(path)
+              checked += 1
+
+              if actual != expected:
+                  print("ERROR:", path)
+                  print("Expected:", expected)
+                  print("Actual:  ", actual)
+                  failed += 1
+
+          print("========================================")
+          print("Packages 条目:", total)
+          print("实际检查:", checked)
+          print("错误:", failed)
+          print("========================================")
+
+          if failed:
+              raise SystemExit(1)
+
+          print("所有软件包大小验证通过")
+          PY
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
