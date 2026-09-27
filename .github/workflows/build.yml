@@ -23,19 +23,16 @@ jobs:
           sudo apt-get install -y dpkg-dev
 
       - name: Clean and rebuild DEB packages
+        shell: bash
         run: |
-          set -e
+          set -Eeuo pipefail
 
           export SOURCE_DATE_EPOCH=0
 
           rm -rf work repo
           mkdir -p work repo/debs
 
-          find . -type f -name "*.deb" \
-            -not -path "./repo/*" \
-            -not -path "./work/*" \
-            -print0 | while IFS= read -r -d '' deb; do
-
+          while IFS= read -r -d '' deb; do
             name="$(basename "$deb")"
             pkgdir="work/${name%.deb}"
             output="repo/debs/$name"
@@ -47,17 +44,68 @@ jobs:
             rm -rf "$pkgdir"
             mkdir -p "$pkgdir"
 
-            # 解包
-            dpkg-deb -R "$deb" "$pkgdir"
+            # 首选正常方式解包
+            if ! sudo dpkg-deb --raw-extract "$deb" "$pkgdir"; then
+              echo "dpkg-deb 解包失败，尝试兼容模式: $name"
+
+              rm -rf "$pkgdir"
+              mkdir -p "$pkgdir"
+
+              tmpdir="$(mktemp -d)"
+
+              ar x "$deb" --output "$tmpdir"
+
+              if [ -f "$tmpdir/data.tar.zst" ]; then
+                sudo tar \
+                  --zstd \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/data.tar.zst" \
+                  -C "$pkgdir"
+
+              elif [ -f "$tmpdir/data.tar.xz" ]; then
+                sudo tar \
+                  -xJ \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$tmpdir/data.tar.xz" \
+                  -C "$pkgdir"
+
+              elif [ -f "$tmpdir/data.tar.gz" ]; then
+                sudo tar \
+                  -xz \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$tmpdir/data.tar.gz" \
+                  -C "$pkgdir"
+
+              elif [ -f "$tmpdir/data.tar" ]; then
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/data.tar" \
+                  -C "$pkgdir"
+
+              else
+                echo "ERROR: 找不到 data.tar.*"
+                rm -rf "$tmpdir"
+                exit 1
+              fi
+
+              rm -rf "$tmpdir"
+            fi
+
+            # 把解包后的文件所有权交还给 Actions 用户
+            sudo chown -R "$(id -u):$(id -g)" "$pkgdir"
 
             control="$pkgdir/DEBIAN/control"
 
             if [ -f "$control" ]; then
 
-              # 确保 control 文件最后存在换行符
+              # 确保 control 文件最后有换行
               sed -i -e '$a\' "$control"
 
-              # 删除第三方源页面跳转信息
+              # 删除第三方源的页面跳转信息
               sed -i '/^[Dd]epiction:/d' "$control"
               sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
               sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
@@ -70,14 +118,12 @@ jobs:
                 printf 'Section: 插件\n' >> "$control"
               fi
 
-              # 再次确保 control 文件以换行结束
+              # 再次确保最后有换行
               sed -i -e '$a\' "$control"
-
             fi
 
             # 修复 Debian 维护脚本权限
             if [ -d "$pkgdir/DEBIAN" ]; then
-
               for script in \
                 preinst \
                 postinst \
@@ -91,7 +137,6 @@ jobs:
                 fi
 
               done
-
             fi
 
             # 重新打包
@@ -105,11 +150,17 @@ jobs:
 
             echo "完成: $output"
 
-          done
+          done < <(
+            find . -type f -name '*.deb' \
+              -not -path './repo/*' \
+              -not -path './work/*' \
+              -print0
+          )
 
       - name: Build Packages index
+        shell: bash
         run: |
-          set -e
+          set -Eeuo pipefail
 
           cd repo
 
@@ -118,8 +169,9 @@ jobs:
           gzip -9 -n -f Packages
 
       - name: Create Release
+        shell: bash
         run: |
-          set -e
+          set -Eeuo pipefail
 
           cd repo
 
@@ -145,8 +197,9 @@ jobs:
           fi
 
       - name: Verify package sizes
+        shell: bash
         run: |
-          set -e
+          set -Eeuo pipefail
 
           cd repo
 
@@ -156,9 +209,7 @@ jobs:
           import os
           import re
 
-          packages_file = "Packages"
-
-          with open(packages_file, "r", encoding="utf-8", errors="replace") as f:
+          with open("Packages", "r", encoding="utf-8", errors="replace") as f:
               data = f.read()
 
           entries = data.strip().split("\n\n")
@@ -168,8 +219,17 @@ jobs:
           failed = 0
 
           for entry in entries:
-              filename = re.search(r"^Filename:\s*(.+)$", entry, re.MULTILINE)
-              size = re.search(r"^Size:\s*(\d+)$", entry, re.MULTILINE)
+              filename = re.search(
+                  r"^Filename:\s*(.+)$",
+                  entry,
+                  re.MULTILINE
+              )
+
+              size = re.search(
+                  r"^Size:\s*(\d+)$",
+                  entry,
+                  re.MULTILINE
+              )
 
               if not filename or not size:
                   continue
