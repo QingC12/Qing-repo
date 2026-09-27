@@ -33,6 +33,7 @@ jobs:
           mkdir -p work repo/debs
 
           while IFS= read -r -d '' deb; do
+
             name="$(basename "$deb")"
             pkgdir="work/${name%.deb}"
             output="repo/debs/$name"
@@ -44,104 +45,216 @@ jobs:
             rm -rf "$pkgdir"
             mkdir -p "$pkgdir"
 
-            # 首选正常方式解包
-            if ! sudo dpkg-deb --raw-extract "$deb" "$pkgdir"; then
-              echo "dpkg-deb 解包失败，尝试兼容模式: $name"
+            tmpdir="$(mktemp -d)"
 
-              rm -rf "$pkgdir"
-              mkdir -p "$pkgdir"
+            cleanup_tmp() {
+              rm -rf "$tmpdir"
+            }
 
-              tmpdir="$(mktemp -d)"
+            trap cleanup_tmp EXIT
 
-              ar x "$deb" --output "$tmpdir"
+            #
+            # 第一阶段：
+            # 使用 ar 拆解 DEB
+            #
+            ar x "$deb" --output "$tmpdir"
 
-              if [ -f "$tmpdir/data.tar.zst" ]; then
+            #
+            # 找 control archive
+            #
+            control_archive=""
+
+            if [ -f "$tmpdir/control.tar.zst" ]; then
+              control_archive="$tmpdir/control.tar.zst"
+            elif [ -f "$tmpdir/control.tar.xz" ]; then
+              control_archive="$tmpdir/control.tar.xz"
+            elif [ -f "$tmpdir/control.tar.gz" ]; then
+              control_archive="$tmpdir/control.tar.gz"
+            elif [ -f "$tmpdir/control.tar" ]; then
+              control_archive="$tmpdir/control.tar"
+            else
+              echo "ERROR: 找不到 control.tar.*"
+              exit 1
+            fi
+
+            #
+            # 找 data archive
+            #
+            data_archive=""
+
+            if [ -f "$tmpdir/data.tar.zst" ]; then
+              data_archive="$tmpdir/data.tar.zst"
+            elif [ -f "$tmpdir/data.tar.xz" ]; then
+              data_archive="$tmpdir/data.tar.xz"
+            elif [ -f "$tmpdir/data.tar.gz" ]; then
+              data_archive="$tmpdir/data.tar.gz"
+            elif [ -f "$tmpdir/data.tar" ]; then
+              data_archive="$tmpdir/data.tar"
+            else
+              echo "ERROR: 找不到 data.tar.*"
+              exit 1
+            fi
+
+            #
+            # 第二阶段：
+            # 解包 control.tar.*
+            #
+            mkdir -p "$pkgdir/DEBIAN"
+
+            case "$control_archive" in
+
+              *.tar.zst)
                 sudo tar \
                   --zstd \
                   --no-same-owner \
                   --no-same-permissions \
-                  -xf "$tmpdir/data.tar.zst" \
-                  -C "$pkgdir"
+                  -xf "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
 
-              elif [ -f "$tmpdir/data.tar.xz" ]; then
+              *.tar.xz)
                 sudo tar \
                   -xJ \
                   --no-same-owner \
                   --no-same-permissions \
-                  -f "$tmpdir/data.tar.xz" \
-                  -C "$pkgdir"
+                  -f "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
 
-              elif [ -f "$tmpdir/data.tar.gz" ]; then
+              *.tar.gz)
                 sudo tar \
                   -xz \
                   --no-same-owner \
                   --no-same-permissions \
-                  -f "$tmpdir/data.tar.gz" \
-                  -C "$pkgdir"
+                  -f "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
 
-              elif [ -f "$tmpdir/data.tar" ]; then
+              *.tar)
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
-                  -xf "$tmpdir/data.tar" \
+                  -xf "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
+
+            esac
+
+            #
+            # 第三阶段：
+            # 解包 data.tar.*
+            #
+            case "$data_archive" in
+
+              *.tar.zst)
+                sudo tar \
+                  --zstd \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$data_archive" \
                   -C "$pkgdir"
+                ;;
 
-              else
-                echo "ERROR: 找不到 data.tar.*"
-                rm -rf "$tmpdir"
-                exit 1
-              fi
+              *.tar.xz)
+                sudo tar \
+                  -xJ \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$data_archive" \
+                  -C "$pkgdir"
+                ;;
 
-              rm -rf "$tmpdir"
-            fi
+              *.tar.gz)
+                sudo tar \
+                  -xz \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$data_archive" \
+                  -C "$pkgdir"
+                ;;
 
-            # 把解包后的文件所有权交还给 Actions 用户
+              *.tar)
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$data_archive" \
+                  -C "$pkgdir"
+                ;;
+
+            esac
+
+            #
+            # 解包完成后，把所有权交还给 Actions 用户
+            #
             sudo chown -R "$(id -u):$(id -g)" "$pkgdir"
 
             control="$pkgdir/DEBIAN/control"
 
-            if [ -f "$control" ]; then
-
-              # 确保 control 文件最后有换行
-              sed -i -e '$a\' "$control"
-
-              # 删除第三方源的页面跳转信息
-              sed -i '/^[Dd]epiction:/d' "$control"
-              sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
-              sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
-              sed -i '/^[Hh]omepage:/d' "$control"
-
-              # 统一分类
-              if grep -qi '^Section:' "$control"; then
-                sed -i 's/^Section:.*/Section: 插件/' "$control"
-              else
-                printf 'Section: 插件\n' >> "$control"
-              fi
-
-              # 再次确保最后有换行
-              sed -i -e '$a\' "$control"
+            if [ ! -f "$control" ]; then
+              echo "ERROR: 找不到 DEBIAN/control"
+              exit 1
             fi
 
+            #
+            # 强制修复 control 权限
+            #
+            chmod 644 "$control"
+
+            #
+            # 确保 control 最后一行有换行
+            #
+            sed -i -e '$a\' "$control"
+
+            #
+            # 删除第三方源页面跳转信息
+            #
+            sed -i '/^[Dd]epiction:/d' "$control"
+            sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
+            sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
+            sed -i '/^[Hh]omepage:/d' "$control"
+
+            #
+            # 统一 Section
+            #
+            if grep -qi '^Section:' "$control"; then
+              sed -i 's/^Section:.*/Section: 插件/' "$control"
+            else
+              printf 'Section: 插件\n' >> "$control"
+            fi
+
+            #
+            # 再次确保最后有换行
+            #
+            sed -i -e '$a\' "$control"
+
+            #
             # 修复 Debian 维护脚本权限
+            #
             if [ -d "$pkgdir/DEBIAN" ]; then
+
               for script in \
                 preinst \
                 postinst \
                 prerm \
                 postrm \
-                config \
-                templates; do
+                config; do
 
                 if [ -f "$pkgdir/DEBIAN/$script" ]; then
                   chmod 755 "$pkgdir/DEBIAN/$script"
                 fi
 
               done
+
             fi
 
-            # 重新打包
+            #
+            # 删除旧输出
+            #
             rm -f "$output"
 
+            #
+            # 重新打包
+            #
             dpkg-deb \
               --build \
               --root-owner-group \
@@ -149,6 +262,13 @@ jobs:
               "$output"
 
             echo "完成: $output"
+
+            #
+            # 清理临时目录
+            #
+            rm -rf "$tmpdir"
+
+            trap - EXIT
 
           done < <(
             find . -type f -name '*.deb' \
@@ -219,6 +339,7 @@ jobs:
           failed = 0
 
           for entry in entries:
+
               filename = re.search(
                   r"^Filename:\s*(.+)$",
                   entry,
