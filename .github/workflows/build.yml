@@ -17,10 +17,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install dpkg-dev
+      - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev
+          sudo apt-get install -y dpkg-dev binutils zstd xz-utils gzip bzip2 lz4
 
       - name: Clean and rebuild DEB packages
         shell: bash
@@ -47,57 +47,81 @@ jobs:
 
             tmpdir="$(mktemp -d)"
 
-            cleanup_tmp() {
-              rm -rf "$tmpdir"
-            }
-
-            trap cleanup_tmp EXIT
-
             #
-            # 第一阶段：
-            # 使用 ar 拆解 DEB
+            # 拆解 DEB
             #
             ar x "$deb" --output "$tmpdir"
 
+            echo "DEB 内部文件:"
+            ls -lah "$tmpdir"
+
             #
-            # 找 control archive
+            # 自动寻找 control archive
             #
             control_archive=""
 
-            if [ -f "$tmpdir/control.tar.zst" ]; then
-              control_archive="$tmpdir/control.tar.zst"
-            elif [ -f "$tmpdir/control.tar.xz" ]; then
-              control_archive="$tmpdir/control.tar.xz"
-            elif [ -f "$tmpdir/control.tar.gz" ]; then
-              control_archive="$tmpdir/control.tar.gz"
-            elif [ -f "$tmpdir/control.tar" ]; then
-              control_archive="$tmpdir/control.tar"
-            else
-              echo "ERROR: 找不到 control.tar.*"
-              exit 1
-            fi
+            for f in "$tmpdir"/control.tar.* "$tmpdir"/control.tar; do
+              if [ -f "$f" ]; then
+                control_archive="$f"
+                break
+              fi
+            done
 
             #
-            # 找 data archive
+            # 自动寻找 data archive
             #
             data_archive=""
 
-            if [ -f "$tmpdir/data.tar.zst" ]; then
-              data_archive="$tmpdir/data.tar.zst"
-            elif [ -f "$tmpdir/data.tar.xz" ]; then
-              data_archive="$tmpdir/data.tar.xz"
-            elif [ -f "$tmpdir/data.tar.gz" ]; then
-              data_archive="$tmpdir/data.tar.gz"
-            elif [ -f "$tmpdir/data.tar" ]; then
-              data_archive="$tmpdir/data.tar"
-            else
+            for f in "$tmpdir"/data.tar.* "$tmpdir"/data.tar; do
+              if [ -f "$f" ]; then
+                data_archive="$f"
+                break
+              fi
+            done
+
+            #
+            # 如果找不到 data archive
+            #
+            if [ -z "$data_archive" ]; then
+
+              echo ""
+              echo "========================================"
               echo "ERROR: 找不到 data.tar.*"
+              echo "文件: $name"
+              echo "========================================"
+              echo ""
+              echo "这个 DEB 的内部结构是:"
+              ar t "$deb"
+              echo ""
+
+              rm -rf "$tmpdir"
               exit 1
             fi
 
             #
-            # 第二阶段：
-            # 解包 control.tar.*
+            # 如果找不到 control archive
+            #
+            if [ -z "$control_archive" ]; then
+
+              echo ""
+              echo "========================================"
+              echo "ERROR: 找不到 control.tar.*"
+              echo "文件: $name"
+              echo "========================================"
+              echo ""
+              echo "这个 DEB 的内部结构是:"
+              ar t "$deb"
+              echo ""
+
+              rm -rf "$tmpdir"
+              exit 1
+            fi
+
+            echo "control archive: $(basename "$control_archive")"
+            echo "data archive:    $(basename "$data_archive")"
+
+            #
+            # 解包 control
             #
             mkdir -p "$pkgdir/DEBIAN"
 
@@ -121,12 +145,30 @@ jobs:
                   -C "$pkgdir/DEBIAN"
                 ;;
 
-              *.tar.gz)
+              *.tar.gz|*.tgz)
                 sudo tar \
                   -xz \
                   --no-same-owner \
                   --no-same-permissions \
                   -f "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
+
+              *.tar.bz2|*.tbz2)
+                sudo tar \
+                  -xj \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$control_archive" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
+
+              *.tar.lz4)
+                lz4 -d "$control_archive" "$tmpdir/control.tar"
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/control.tar" \
                   -C "$pkgdir/DEBIAN"
                 ;;
 
@@ -138,11 +180,17 @@ jobs:
                   -C "$pkgdir/DEBIAN"
                 ;;
 
+              *)
+                echo "ERROR: 不支持的 control archive:"
+                echo "$control_archive"
+                rm -rf "$tmpdir"
+                exit 1
+                ;;
+
             esac
 
             #
-            # 第三阶段：
-            # 解包 data.tar.*
+            # 解包 data
             #
             case "$data_archive" in
 
@@ -164,12 +212,30 @@ jobs:
                   -C "$pkgdir"
                 ;;
 
-              *.tar.gz)
+              *.tar.gz|*.tgz)
                 sudo tar \
                   -xz \
                   --no-same-owner \
                   --no-same-permissions \
                   -f "$data_archive" \
+                  -C "$pkgdir"
+                ;;
+
+              *.tar.bz2|*.tbz2)
+                sudo tar \
+                  -xj \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$data_archive" \
+                  -C "$pkgdir"
+                ;;
+
+              *.tar.lz4)
+                lz4 -d "$data_archive" "$tmpdir/data.tar"
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/data.tar" \
                   -C "$pkgdir"
                 ;;
 
@@ -181,10 +247,17 @@ jobs:
                   -C "$pkgdir"
                 ;;
 
+              *)
+                echo "ERROR: 不支持的 data archive:"
+                echo "$data_archive"
+                rm -rf "$tmpdir"
+                exit 1
+                ;;
+
             esac
 
             #
-            # 解包完成后，把所有权交还给 Actions 用户
+            # 修复所有权
             #
             sudo chown -R "$(id -u):$(id -g)" "$pkgdir"
 
@@ -192,21 +265,22 @@ jobs:
 
             if [ ! -f "$control" ]; then
               echo "ERROR: 找不到 DEBIAN/control"
+              rm -rf "$tmpdir"
               exit 1
             fi
 
             #
-            # 强制修复 control 权限
+            # 修复 control 权限
             #
             chmod 644 "$control"
 
             #
-            # 确保 control 最后一行有换行
+            # 确保最后有换行
             #
             sed -i -e '$a\' "$control"
 
             #
-            # 删除第三方源页面跳转信息
+            # 删除第三方跳转页面
             #
             sed -i '/^[Dd]epiction:/d' "$control"
             sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
@@ -223,7 +297,7 @@ jobs:
             fi
 
             #
-            # 再次确保最后有换行
+            # 再次确保换行
             #
             sed -i -e '$a\' "$control"
 
@@ -248,13 +322,10 @@ jobs:
             fi
 
             #
-            # 删除旧输出
+            # 重新打包
             #
             rm -f "$output"
 
-            #
-            # 重新打包
-            #
             dpkg-deb \
               --build \
               --root-owner-group \
@@ -263,12 +334,7 @@ jobs:
 
             echo "完成: $output"
 
-            #
-            # 清理临时目录
-            #
             rm -rf "$tmpdir"
-
-            trap - EXIT
 
           done < <(
             find . -type f -name '*.deb' \
