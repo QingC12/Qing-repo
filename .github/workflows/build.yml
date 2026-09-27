@@ -20,7 +20,7 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev binutils zstd xz-utils gzip bzip2 lz4
+          sudo apt-get install -y dpkg-dev binutils zstd xz-utils gzip bzip2 lz4 lzma
 
       - name: Clean and rebuild DEB packages
         shell: bash
@@ -60,11 +60,15 @@ jobs:
             #
             control_archive=""
 
-            for f in "$tmpdir"/control.tar.* "$tmpdir"/control.tar; do
+            for f in \
+              "$tmpdir"/control.tar.* \
+              "$tmpdir"/control.tar; do
+
               if [ -f "$f" ]; then
                 control_archive="$f"
                 break
               fi
+
             done
 
             #
@@ -72,15 +76,19 @@ jobs:
             #
             data_archive=""
 
-            for f in "$tmpdir"/data.tar.* "$tmpdir"/data.tar; do
+            for f in \
+              "$tmpdir"/data.tar.* \
+              "$tmpdir"/data.tar; do
+
               if [ -f "$f" ]; then
                 data_archive="$f"
                 break
               fi
+
             done
 
             #
-            # 如果找不到 data archive
+            # 找不到 data archive
             #
             if [ -z "$data_archive" ]; then
 
@@ -99,7 +107,7 @@ jobs:
             fi
 
             #
-            # 如果找不到 control archive
+            # 找不到 control archive
             #
             if [ -z "$control_archive" ]; then
 
@@ -165,6 +173,15 @@ jobs:
 
               *.tar.lz4)
                 lz4 -d "$control_archive" "$tmpdir/control.tar"
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/control.tar" \
+                  -C "$pkgdir/DEBIAN"
+                ;;
+
+              *.tar.lzma)
+                lzma -dc "$control_archive" > "$tmpdir/control.tar"
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
@@ -239,6 +256,15 @@ jobs:
                   -C "$pkgdir"
                 ;;
 
+              *.tar.lzma)
+                lzma -dc "$data_archive" > "$tmpdir/data.tar"
+                sudo tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$tmpdir/data.tar" \
+                  -C "$pkgdir"
+                ;;
+
               *.tar)
                 sudo tar \
                   --no-same-owner \
@@ -275,7 +301,7 @@ jobs:
             chmod 644 "$control"
 
             #
-            # 确保最后有换行
+            # 确保 control 最后一行有换行
             #
             sed -i -e '$a\' "$control"
 
