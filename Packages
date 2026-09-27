@@ -32,40 +32,6 @@ Description: Enables the ability to install unsigned/fakesigned iOS applications
 Author: Karen/あけみ, Linus Yang <karen@akemi.ai>
 Name: AppSync Unified
 
-Package: axssb666
-Version: 1.0.0
-Architecture: iphoneos-arm64
-Maintainer: JJ
-Installed-Size: 296
-Depends: mobilesubstrate (>= 0.9.5000)
-Filename: debs/axssb666_1.0.0_iphoneos-arm64.deb
-Size: 47050
-MD5sum: d7ff7e493029f11fe5dc434dc2392046
-SHA1: 0c81ba7b360cc82dd8627f6dbc20c90e83362ab3
-SHA256: 4a56e8ddc24143d48108bcd574cc496c3da60f2dbdeeecd1447674001120ea39
-Section: 插件
-Description: A狗微信全局圆角破解组件 安装此组件即可解锁授权 需要配合全局圆角主插件使用
-Author: JJ
-Name: 微信全局圆角（免授权）
-
-Package: byg.iosios.net.mango
-Version: 1.0-Beta4-2
-Architecture: iphoneos-arm64
-Maintainer: 搬运工
-Installed-Size: 3548
-Depends: mobilesubstrate
-Filename: debs/byg.iosios.net.mango_1.0-Beta4-2_iphoneos-arm64.deb
-Size: 1030100
-MD5sum: 1cdbc0660690181311b82767b2bba714
-SHA1: 6fb98a2a8660524692272abb59a39e50164b1f66
-SHA256: 5095467ccd379b1e2b581d99d98b7c22ecd73f9c3a0199629342745fee819b90
-Section: 插件
-Description: 一款非常不错的分屏插件，需要授权才能使用，但是免费功能可以液态玻璃 视频壁纸 双击锁屏 音量键锁屏等等，还是可以的，大家可以自行看看是否是自己需要的，觉得不错的可以支持一下！
-Author: go
-Icon: https://chinesebuilding.club/pic/cydia.png
-Name: 芒果分屏1.0-Beta4-2（免授权）
-Sponsor: 搬运工
-
 Package: cc.forcequit.lightshields
 Version: 1.0.0
 Architecture: iphoneos-arm64e
@@ -137,39 +103,6 @@ Section: 插件
 Description: 激活码用户或需要激活码的用户安装这个，非激活码用户不要安装！！Do not install if you do not have an activation code!!! Extend your keyboard to be more POWERFULL!
 Author: SquidForce, Backup
 Name: SquidExtender(激活码版)
-
-Package: cn.octoforce.squidextender
-Version: 3.7.4-2
-Architecture: iphoneos-arm64
-Maintainer: SquidForce, Backup
-Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy
-Conflicts: com.squidforce.squidextender
-Filename: debs/cn.octoforce.squidextender_3.7.4-2_iphoneos-arm64.deb
-Size: 3028974
-MD5sum: 2527a6fc152d19b685349da692e469be
-SHA1: ab74aa2b0e019496efabbe2356d9b3eaa5c3f015
-SHA256: c4461fb6e35090ab6c2f3d96fd44d9a4bf814555664f2961b10c80583bce3986
-Section: 插件
-Description: SquidExtender + PCrack 离线授权（本地生成合法授权，不改二进制）
-Author: SquidForce, Backup
-Name: 乌贼键盘无根（免授权）
-
-Package: cn.octoforce.squidextender.roothide
-Version: 3.7.4+offline.1
-Architecture: iphoneos-arm64e
-Maintainer: SquidForce, Backup
-Installed-Size: 10254
-Depends: mobilesubstrate, preferenceloader, com.opa334.libsandy, firmware (>= 15.0)
-Conflicts: cn.octoforce.squidextender, com.squidforce.squidextender
-Filename: debs/cn.octoforce.squidextender.roothide_3.7.4+offline.1_iphoneos-arm64e.deb
-Size: 2662384
-MD5sum: c27ec5eb5a9e602dc304a36c89402243
-SHA1: 3618626bd42eab5cc72533147059c6107ced20a0
-SHA256: 49229d3a9f997409905e1a7f88a10170cd46039e5f0738d1cdf71c7489f8b2cd
-Section: 插件
-Description: Local device-bound license recovery for SquidExtender 3.7.4. No activation server required. Device validation pending.
-Author: SquidForce, Backup
-Name: 乌贼键盘隐根（免授权）
 
 Package: cn.octoforce.squidgesturepro
 Version: 2.7.6-2
@@ -297,45 +230,6 @@ Author: 82flex
 Icon: https://TrollStoreX.Github.io/sileodepiction/Unseen/icon.png
 Name: Unseen 绕过截图/录屏检测
 
-Package: com.Axs.afn
-Version: 3.5.9
-Architecture: iphoneos-arm64e
-Maintainer: AFN Team
-Pre-Depends: rootless-compat(>= 0.9)
-Depends: mobilesubstrate, firmware (>= 15.0)
-Filename: debs/com.Axs.afn_3.5.9_arm64e.deb
-Size: 3100012
-MD5sum: 1a2be3df11e1742b65770b17dd324aae
-SHA1: 6d66ade5eefa9cae4221842790b95c5e277c5948
-SHA256: 82c18b1c2123bc248100be90f023413d13c091a1a06ead48ba50581b06377b00
-Section: 插件
-Description: AFN是一个微信插件功能集合体。装完该插件其他微信插件基本可以卸载了。
-Author: AFN Team
-Icon: https://axs66.github.io/pro/icon/wechat.png
-Name: AFN(微信插件)-Roothide
-
-Package: com.Axs.floating-view
-Version: 1.6.0-6
-Architecture: iphoneos-arm64
-Maintainer: Axs
-Installed-Size: 2700
-Depends: dev.theos.orion (>= 1.0.0), firmware (>= 12.2)
-Filename: debs/com.Axs.floating-view_1.6.0-6_iphoneos-arm64.deb
-Size: 735298
-MD5sum: 538368c38d9ffa6a05ce708a9dccb41d
-SHA1: b3f6691fb77de97ed903823dc455a0206a8fad78
-SHA256: 2afb5260c0ebb206a0aed37f6aded8c30fedba32a392a355f3c20627742c5300
-Section: 插件
-Description: 温馨提示:
-  * 1、仅供个人备份与学习研究使用。
-  * 2、本插件未经过大量设备测试，仅在 iPhone 14 Pro iOS 16.2、iPhone 14 Pro Max iOS 16.5 无根越狱环境下测试正常可用。
-  * 3、本版本仅处理授权验证逻辑，插件其他原有逻辑未作修改。若安装后无效、冲突或导致设备/应用异常，请自行卸载。
-  * 4、免责声明：安装和使用本插件所产生的一切风险由使用者自行承担。如因插件本身兼容性、原始代码逻辑或其他未知问题导致设备、系统、应用出现异常，请联系原插件作者处理。本人不承担因此产生的任何责任。
-  * 5、安全预警：鉴于越狱圈内部分特定人员（如Fv作者、苏苏、Wkk等）存在发布恶意格机代码、恶意抹黑及录制栽赃嫁祸视频的前科，需要用户自行甄别，从正确渠道下载插件。
-Author: be-huge
-Icon: https://axs66.github.io/pro/icon/svp.png
-Name: FV分屏（免授权）
-
 Package: com.Axs.kongzhidiy
 Version: 2.3.3-end
 Architecture: iphoneos-arm64
@@ -370,40 +264,6 @@ Author: 冰蓝
 Icon: https://axs66.github.io/pro/icon/screenshellpro.png
 Name: 全局水印Pro（免授权）
 
-Package: com.Axs.xmzs
-Version: 1.1-4C
-Architecture: iphoneos-arm64
-Maintainer: xmmm
-Installed-Size: 3728
-Depends: firmware (>= 5.0), mobilesubstrate
-Filename: debs/com.Axs.xmzs_1.1-4C_iphoneos-arm64.deb
-Size: 1291954
-MD5sum: 5b76702dcb9bcf49acf70b6fb7e07593
-SHA1: 50a29fb28615292942946897f43c98fed55c83c7
-SHA256: 1c1ab572ef7db5b7df3c7a2ca1dc8a8f0d6327de867f6dccbff2c898df098087
-Section: 插件
-Priority: optional
-Description: 微信功能扩展
-Author: xmmm
-Icon: https://axs66.github.io/pro/icon/wechat.png
-Name: 熊猫助手（免授权）
-
-Package: com.Axs.yuanjiao
-Version: 1.8.6
-Architecture: iphoneos-arm64e
-Maintainer: Axs
-Depends: mobilesubstrate (>= 0.9.5000)
-Filename: debs/com.axs.yuanjiao_1.8.6_iphoneos-arm64e.deb
-Size: 761146
-MD5sum: 31b9fa9a6473cda75d10f442aed3a2e8
-SHA1: 73225328fdf21b4026a43d11d700366a654a2942
-SHA256: f25ed9c43937f3ecb847d5723edfe49d845004c29e25e8bcd7fb5e30f36100ea
-Section: 插件
-Description: A狗的微信全局圆角插件原版 1.8.6-END 下载源里全局圆角（免授权）插件即可解锁授权
-Author: A
-Icon: https://axs66.github.io/repo/icon/wechat.png
-Name: 微信全局圆角
-
 Package: com.Doki.wxkeyboarduihook
 Version: 1.8
 Architecture: iphoneos-arm64e
@@ -421,6 +281,25 @@ Description: 微信输入法自定义
 Author: Doki
 Icon: https://huayuarc.github.io/icon/WXKeyboardUIHook.png
 Name: 微信输入法自定义
+
+Package: com.afns
+Version: 3.5.9
+Architecture: iphoneos-arm64e
+Maintainer: AFN Team
+Installed-Size: 5412
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: firmware (>= 15.0)
+Conflicts: com.tencent.xin.dkhelper, com.dkjone.dkhelper, com.afn.helper, com.xiaoxin.helper, com.afn
+Filename: debs/com.afns_3.5.9_arm64e.deb
+Size: 3118764
+MD5sum: 6f48e3822eb2a4d992658f07a135dff9
+SHA1: a66f5abbe33d234fa9dcca2ae1b9525643676da3
+SHA256: c5b79e4f28c58d5e42573074c9405e0429605272a710df93049749b38444a3b7
+Section: 插件
+Description: 微信超多功能插件
+Author: AFN Team
+Icon: https://TrollStoreX.Github.io/sileodepiction/AFN/icon.png
+Name: 微信大杂烩 AFN
 
 Package: com.autoscroll.jb
 Version: 1.0.0
@@ -441,49 +320,6 @@ Author: pxcex
 Icon: https://TrollStoreX.Github.io/sileodepiction/AutoScroll/icon.png
 Name: AutoScroll 自动滑动
 
-Package: com.axs.ios16dao
-Version: 5.2.0-244
-Architecture: iphoneos-arm64
-Maintainer: Axs
-Installed-Size: 704
-Depends: mobilesubstrate (>= 0.9.5000), preferenceloader, com.opa334.altlist
-Filename: debs/com.axs.ios16dao_5.2.0-244_iphoneos-arm64.deb
-Size: 142858
-MD5sum: c8d8c3cfa94272e13589f12b99f8901c
-SHA1: c22b8741c8d9a8861814262598a06ba05d416d64
-SHA256: c51f3233494f31306204772d9a21fc57a652d8383e72facf07f47553c42df4ca
-Section: 插件
-Description: 一款市面上最优秀、功能最完整、最稳定的灵动岛插件。付费插件，150缘，授权校验联系:VCR66T
- * 1. 动态岛自定义背景，支持 PNG/JPG/GIF/MP4。
- * 2. 录屏的时候，可以隐藏原生岛黑色区域，让效果更美观。
- * 3. 内置纯代码灵动光圈（如彩虹环、彩虹流星、舞台灯、跑马灯、纯色线框）、漂亮的七彩随机光圈阴影等特效。
- * 4. 灵动岛左右两侧自定义png图片帧率动画（如写轮眼、跳舞等玩法）。
- * 5. 本插件无需任何依赖、支持手势录屏触发，已经达到极致水平。
-Author: Axs
-Icon: https://axs66.github.io/pro/icon/dynamicnotland.png
-Name: A狗150动态岛（免授权）
-
-Package: com.axs.ios16dao.keygen
-Version: 1.0.0
-Architecture: iphoneos-arm64
-Maintainer: personal
-Filename: debs/com.axs.ios16dao.keygen_1.0.0_iphoneos-arm64.deb
-Size: 5630
-MD5sum: 517d7c962686ee0de7ec802f53108a5a
-SHA1: f066a41f24ce541e701d9eba651744e5e453d40d
-SHA256: 7e85615cd9b1d2169914f659ec5eb724000d082d99bca7bb4b407ec3ddf6a625
-Section: 插件
-Description: A狗动态岛（ios16dao）激活码生成器。生成 18 位激活码，纯本地计算、不联网。
- .
- 使用说明：
- 1. 打开 A狗动态岛 的授权弹窗，记下 12 位十六进制设备码（如 B67E31825990）；
- 2. 用 Filza 进入 /var/jb/Library/，打开「A狗动态岛激活码生成器.html」；
- 3. 输入设备码，自动生成 18 位激活码，点「复制激活码」；
- 4. 把激活码粘贴回插件弹窗，完成激活；
- 5. 也可在电脑浏览器打开 https://tlzypjy.github.io/jb-repo/A狗动态岛激活码生成器.html 生成，效果一样。
-Author: personal
-Name: A狗动态岛激活码生成器
-
 Package: com.axs.screenrecording
 Version: 5.2.0-35
 Architecture: iphoneos-arm64
@@ -500,64 +336,6 @@ Description: 全局录屏自动添加你预先放好的水印和套壳素材，�
 Author: Axs
 Icon: https://axs66.github.io/pro/icon/screenrecording.png
 Name: A狗截图套壳（免授权）
-
-Package: com.axs.snapper3tag
-Version: 5.2.0-326
-Architecture: iphoneos-arm64e
-Maintainer: Axs <qiaozhini000@163.com>
-Installed-Size: 1052
-Pre-Depends: rootless-compat (>= 0.9)
-Depends: mobilesubstrate
-Filename: debs/com.axs.snapper3tag_5.2.0-326_iphoneos-arm64e.deb
-Size: 203458
-MD5sum: b2abb505801c379ebb7f3e12dad6b4e9
-SHA1: 835714277f74d5bcf1da4b85b19992a7b8f992eb
-SHA256: 4877172f4e12496b6514369f4cc455b7b2e5461e348e6c447d4e151b2c46fc64
-Section: 插件
-Description: Snapper3 功能扩展，目前包含：截图标记 + 长截图 + OCR识别 + 翻译 + AI互译 + AI问答 + Sileo长按翻译，修复了原snapper3主体插件第7个图标遮挡一半的bug；将菜单工具栏最后一个“关闭”图标进行固定，增加滑动视觉效果。
- * 一、【自定义图标】
- * 创建 "/var/mobile/Axs/Snapper3图标/自定义文件夹" ，放入以下对应素材，即可替换默认图标：
- *   标记    ：tag.png   / tag_menu.png
- *   长截图  ：long.png  / long_menu.png
- *   ocr识别 ：ocr.png   / ocr_menu.png
- *   翻译    ：trans.png / trans_menu.png
- *   Ai互译  ：huyi.png  / huyi_menu.png
- *   Ai回答  ：wenda.png / wenda_menu.png
- * 二、【截图标记】
- * 颜色选择：红/黄/蓝/绿/白/黑等6种颜色；
- * 箭头标记：手指拖拽绘制方向箭头；
- * 自由画线：手指跟随绘制任意曲线；
- * 文字标注：点击图片任意位置弹出输入框与键盘，输入文字落点标注，支持字号滑条实时调节；
- * 矩形图标：点击1次是矩形框选+点击2次是矩形填充；
- * 圆形图标：点击1次是圆形框选+点击2次是圆形填充；
- * 高亮图标：点击1次是高亮框选+点击2次是半透明填充；
- * 马赛克图标：网格分块打码，颗粒固定细腻；
- * 撤回操作：一键撤销上一步标注；
- * 删除操作：一键删除所有标注；
- * 保存相册：渲染并写入系统相册；
- * 复制剪贴板：一键复制标注后截图；
- * 三、【长截图 Pro】
- * 两种模式可选：滚动拼接/ 一键到底；
- * 智能帧匹配，自动拼接；
- * 支持保存到相册、复制到剪贴板；
- * 四、【OCR识别】
- * 使用 PaddleOCR模型识别截图文字；
- * 半屏浮层展示，支持涂抹选择、一键复制；
- * 需自备API Token。
- * 五、【翻译】
- * 百度翻译 API，自动检测语言双向翻译；
- * 支持图片翻译和文本翻译两种通道；
- * 半屏浮层展示，支持涂抹选择、一键复制；
- * 需自备百度开发者信息中的 AppID 和 密钥。
- * 六、【Ai互译+问答】
- * 支持中英文互译和中文问答；
- * 半屏浮层展示，支持涂抹选择、一键复制；
- * 需自备阿里云 API Key。
- * 七、【长按音量-冻结】
- * 开启后，长按音量减键约0.2秒即可调出Snapper3冻结模式，适合无手势（不开启悬浮球/手势）的用户，用物理按键直接使用本插件全部标注功能。
-Author: Axs <qiaozhini000@163.com>
-Icon: https://axs66.github.io/pro/icon/snapper.png
-Name: Snapper3 Expand
 
 Package: com.axs.switchicon
 Version: 5.2.0-131
@@ -2097,38 +1875,6 @@ Author: SINI
 Icon: https://sini921.github.io/repo/sileodepiction/icon/zoomanimation.png
 Name: ZoomAnimation(roothide)
 
-Package: com.siwenjiajia.tweak.comm
-Version: 28.35
-Architecture: iphoneos-arm64
-Maintainer: personal
-Depends: firmware (>= 14.0), mobilesubstrate | org.coolstar.libhooker | ellekit
-Conflicts: com.siwenjiajia.tweak.free
-Filename: debs/com.siwenjiajia.tweak.comm_28.35_iphoneos-arm64.deb
-Size: 4218810
-MD5sum: 24c8f8e6fd15db14fa449316f75c2ba9
-SHA1: 1631935d665d524cee9cf0dc9788668164271e8f
-SHA256: 2cb8ba42c93d81dde5b3d3b65cd9cc2e3f6f9a802a84b47e784767ed83652cba
-Section: 插件
-Description: 抖音优化 交流版 28.35（免授权·完整版）。玻璃拟态、语音朗读、视频统计等，联网功能较多，仅自用。
-Author: siwenjiajia
-Name: 抖音优化（免授权）
-
-Package: com.siwenjiajia.tweak.free
-Version: 28.17
-Architecture: iphoneos-arm64
-Maintainer: personal
-Depends: firmware (>= 14.0), mobilesubstrate | org.coolstar.libhooker | ellekit
-Conflicts: com.siwenjiajia.tweak.comm
-Filename: debs/com.siwenjiajia.tweak.free_28.17_iphoneos-arm64.deb
-Size: 3390120
-MD5sum: 17020505c29d173b707ad32f9f690e91
-SHA1: 207429d31e05ad8371d6758f8a2d36fceaf853b4
-SHA256: 61a7a5223de78751ab54668c4b1db27a6ce3f2b9f4b5d41373469a8238c51657
-Section: 插件
-Description: 抖音优化 破解版 28.17（免授权·精简版）。功能较少、联网轻，仅自用。
-Author: siwenjiajia
-Name: 抖音优化（免授权）
-
 Package: com.skypain.ccresprings
 Version: 2.0.0-1
 Architecture: iphoneos-arm64e
@@ -2437,40 +2183,6 @@ Author: wkk
 Icon: file:///Applications/InstalledPackages.app/icon_large.png
 Name: InstalledPackages（wkk）
 
-Package: com.wkk.keyboardx
-Version: 1.0-6
-Architecture: iphoneos-arm64
-Maintainer: wkk
-Installed-Size: 516
-Depends: mobilesubstrate (>= 0.9.5000), preferenceloader
-Filename: debs/com.wkk.keyboardx_1.0-6_iphoneos-arm64.deb
-Size: 72370
-MD5sum: b13b4aa75b18f77e953f4aafdc8ddddf
-SHA1: 859bf831461df4c3c223f48778985c8a5370782d
-SHA256: 4b06eb1dd193e2e1e2c6a8592fac92b59a268f1298b694214306f7af3809d847
-Section: 插件
-Description: 键盘调整。
-Author: wkk
-Icon: https://s1.imagehub.cc/images/2025/12/26/29fda3e52ac78c6958ecf3b5dac18673.png
-Name: keyboardX（wkk）
-
-Package: com.wkk.keyboardx
-Version: 1.1-6
-Architecture: iphoneos-arm64
-Maintainer: wkk
-Installed-Size: 616
-Depends: mobilesubstrate (>= 0.9.5000), preferenceloader
-Filename: debs/com.wkk.keyboardx_1.1-6_iphoneos-arm64.deb
-Size: 91816
-MD5sum: e65156bb9b05a256bef8f780d0cc6bda
-SHA1: 999dce0648b72b09c4fa65eb7fb0d04732ecaf0f
-SHA256: 7c2bd58a856664c7ec70a215b16a888988096c5b7570f3dffb21a223ecdf0794
-Section: 插件
-Description: 键盘调整。
-Author: wkk
-Icon: https://s1.imagehub.cc/images/2025/12/26/29fda3e52ac78c6958ecf3b5dac18673.png
-Name: KeyboardX（wkk）
-
 Package: com.wkk.onestepx
 Version: 1.1-0
 Architecture: iphoneos-arm64e
@@ -2487,40 +2199,6 @@ Description: 为 iPhone 操作按钮、锁屏按钮、桌面、底部与状态�
 Author: wkk
 Icon: https://s1.imagehub.cc/images/2025/12/26/29fda3e52ac78c6958ecf3b5dac18673.png
 Name: OneStepX（wkk）
-
-Package: com.wkk.systembox
-Version: 1.4-7
-Architecture: iphoneos-arm64
-Maintainer: wkk
-Installed-Size: 1572
-Depends: mobilesubstrate, preferenceloader
-Filename: debs/com.wkk.systembox_1.4-7_iphoneos-arm64.deb
-Size: 335362
-MD5sum: bd1912e67ce3b2a0f363bdf71520446f
-SHA1: 6495d38066078c5e032699bdcaaf94dfc639fe5f
-SHA256: 6936ca9444f1297407f6323269fb750df931d3c409f7425f6170cd84834378ba
-Section: 插件
-Description: cool
-Author: wkk
-Icon: https://s1.imagehub.cc/images/2025/12/26/29fda3e52ac78c6958ecf3b5dac18673.png
-Name: SystemX（wkk）
-
-Package: com.wkk.wechatx
-Version: 2.3-2
-Architecture: iphoneos-arm64
-Maintainer: wkk
-Installed-Size: 8376
-Depends: mobilesubstrate (>= 0.9.5000)
-Filename: debs/com.wkk.wechatx_2.3-2_iphoneos-arm64.deb
-Size: 3322800
-MD5sum: 394fd718ea460367dcd0ed2f5033094d
-SHA1: 794ea4bd073c90505c27be2a8ca8f111a46748b5
-SHA256: e229b981e0cb688f2ae53ebf8adcdd0dd3e78a3967714885e9a58a13232bb8dc
-Section: 插件
-Description: 一个新生代的插件，主打自由定义与实用为主，更多功能由群友集思广益，如果你想实现自己想要的功能，有更好的想法，欢迎来我的付费群玩。wx号：chn137
-Author: wkk
-Icon: https://s1.imagehub.cc/images/2025/01/01/95a2f7dd7e6f2a540e2f53f95ae214d4.png
-Name: WeChatX（wkk）
 
 Package: com.xx.kshooks
 Version: 1.0.6-3
@@ -2723,28 +2401,6 @@ Description: 阻止应用创建自己的相册
 Author: Netskao
 Icon: https://TrollStoreX.Github.io/sileodepiction/repo_pic/photo.png
 Name: 禁止应用自动创建相册BlockAppsCreateAlbum
-
-Package: netskao.wechatpurifications
-Version: 2026.04
-Architecture: iphoneos-arm64e
-Maintainer: BigBoss
-Installed-Size: 23256
-Pre-Depends: rootless-compat(>= 0.9)
-Depends: firmware (>= 12.0), mobilesubstrate (>= 0.9.5000)
-Conflicts: netskao.wechatpurification
-Filename: debs/netskao.wechatpurifications_2026.04_iphoneos-arm64e.deb
-Size: 9303808
-MD5sum: 721c3b20fd73624813f4d07cf1890674
-SHA1: e21e66559ac325f634897aaf074e436fcb8af712
-SHA256: 57d6df5778f99e89691ef82a22fff0dadf9e045cc5bf59c79c6ff39c36f71404
-Section: 插件
-Description: 微信净化 2026.04 版本
- * 还原聊天本质，干净的微信给你
- * 2026 年基于 2023 年最终版重新编译，仅优化防止热更新导致的功能失效，未修复任何因微信版本更新出现的问题
- * 如需私有版(¥68.00)可联系 admin@initnil.com 进行了解
-Author: Netskao
-Icon: https://TrollStoreX.Github.io/sileodepiction/WechatPure/icon.png
-Name: 微信净化 2026.04
 
 Package: preferenceloader.rootless.tops
 Version: 2.2.7
