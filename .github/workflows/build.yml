@@ -1,101 +1,75 @@
-name: Build Repo
-
+name: Build Qing Repo
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Install dpkg-dev
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
-
-      - name: Prepare repository
-        run: |
-          rm -rf repo work
-          mkdir -p repo/debs
-          mkdir -p work
-
       - name: Clean and rebuild DEB packages
-        shell: bash
         run: |
           set -e
-
           export SOURCE_DATE_EPOCH=0
-
           find . -type f -name "*.deb" \
             -not -path "./repo/*" \
             -not -path "./work/*" \
             -print0 | while IFS= read -r -d '' deb; do
-
             name="$(basename "$deb")"
             pkgdir="work/${name%.deb}"
-
             echo "========================================"
             echo "处理: $name"
             echo "========================================"
-
             rm -rf "$pkgdir"
             mkdir -p "$pkgdir"
-
             dpkg-deb -R "$deb" "$pkgdir"
-
+            # 修复 Debian 维护脚本权限
+            if [ -d "$pkgdir/DEBIAN" ]; then
+              chmod 755 "$pkgdir/DEBIAN/"* 2>/dev/null || true
+            fi
             control="$pkgdir/DEBIAN/control"
-
             if [ -f "$control" ]; then
-
+              # 删除第三方源的页面/跳转信息
               sed -i '/^[Dd]epiction:/d' "$control"
               sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
               sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
-
               sed -i '/^[Hh]omepage:/d' "$control"
-
+              # 统一分类
               if grep -qi '^Section:' "$control"; then
                 sed -i 's/^Section:.*/Section: 插件/' "$control"
               else
                 printf '\nSection: 插件\n' >> "$control"
               fi
-
             fi
-
             output="repo/debs/$name"
-
+            mkdir -p repo/debs
             rm -f "$output"
-
             dpkg-deb \
               --build \
               --root-owner-group \
               "$pkgdir" \
               "$output"
-
             echo "完成: $output"
           done
-
-      - name: Build Packages
-        shell: bash
+      - name: Build Packages index
         run: |
           set -e
-
           cd repo
-
-          rm -f Packages Packages.gz
-
           dpkg-scanpackages -m debs /dev/null > Packages
-
           gzip -9 -n -f Packages
-
+      - name: Create Release
+        run: |
+          set -e
+          cd repo
           cat > Release <<'EOF'
           Origin: Qing Repo
           Label: Qing Repo
@@ -106,45 +80,40 @@ jobs:
           Components: main
           Description: Qing iOS Jailbreak Repository
           EOF
-
-          touch .nojekyll
-
-          if [ -f ../CydiaIcon.png ]; then
-            cp ../CydiaIcon.png CydiaIcon.png
+      - name: Create .nojekyll
+        run: |
+          touch repo/.nojekyll
+      - name: Copy CydiaIcon
+        run: |
+          if [ -f CydiaIcon.png ]; then
+            cp CydiaIcon.png repo/CydiaIcon.png
           fi
-
       - name: Verify package sizes
-        shell: bash
         run: |
           set -e
-
           cd repo
-
-          echo "===== 检查 Packages 文件大小 ====="
-
-          while IFS= read -r package; do
-            filename=$(echo "$package" | sed -n 's/^Filename: //p')
-            expected=$(echo "$package" | sed -n 's/^Size: //p')
-
-            if [ -n "$filename" ] && [ -n "$expected" ]; then
-              actual=$(stat -c%s "$filename")
-
-              if [ "$expected" != "$actual" ]; then
-                echo "错误:"
-                echo "$filename"
-                echo "Packages: $expected"
-                echo "实际:     $actual"
-                exit 1
+          gzip -dc Packages.gz > Packages
+          while IFS= read -r line; do
+            if [[ "$line" == Filename:* ]]; then
+              file="${line#Filename: }"
+              next=$(grep -A1 -F "$line" Packages | tail -1)
+              if [[ "$next" == Size:* ]]; then
+                expected="${next#Size: }"
+                actual=$(stat -c%s "$file")
+                if [ "$expected" != "$actual" ]; then
+                  echo "ERROR: $file"
+                  echo "Expected size: $expected"
+                  echo "Actual size:   $actual"
+                  exit 1
+                fi
               fi
             fi
-          done < <(awk 'BEGIN{RS=""} {print}' Packages)
-
-          echo "所有 DEB 文件大小检查通过"
-
-      - name: Deploy to gh-pages
+          done < Packages
+          echo "所有软件包大小验证通过"
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./repo
           publish_branch: gh-pages
-          force_orphan: true
+          force_orphan: false
