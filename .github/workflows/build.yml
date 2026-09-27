@@ -47,17 +47,11 @@ jobs:
 
             tmpdir="$(mktemp -d)"
 
-            #
-            # 拆解 DEB
-            #
             ar x "$deb" --output "$tmpdir"
 
             echo "DEB 内部文件:"
             ls -lah "$tmpdir"
 
-            #
-            # 自动寻找 control archive
-            #
             control_archive=""
 
             for f in \
@@ -71,9 +65,6 @@ jobs:
 
             done
 
-            #
-            # 自动寻找 data archive
-            #
             data_archive=""
 
             for f in \
@@ -87,9 +78,6 @@ jobs:
 
             done
 
-            #
-            # 找不到 data archive
-            #
             if [ -z "$data_archive" ]; then
 
               echo ""
@@ -97,18 +85,13 @@ jobs:
               echo "ERROR: 找不到 data.tar.*"
               echo "文件: $name"
               echo "========================================"
-              echo ""
-              echo "这个 DEB 的内部结构是:"
+
               ar t "$deb"
-              echo ""
 
               rm -rf "$tmpdir"
               exit 1
             fi
 
-            #
-            # 找不到 control archive
-            #
             if [ -z "$control_archive" ]; then
 
               echo ""
@@ -116,10 +99,8 @@ jobs:
               echo "ERROR: 找不到 control.tar.*"
               echo "文件: $name"
               echo "========================================"
-              echo ""
-              echo "这个 DEB 的内部结构是:"
+
               ar t "$deb"
-              echo ""
 
               rm -rf "$tmpdir"
               exit 1
@@ -128,10 +109,11 @@ jobs:
             echo "control archive: $(basename "$control_archive")"
             echo "data archive:    $(basename "$data_archive")"
 
-            #
-            # 解包 control
-            #
-            mkdir -p "$pkgdir/DEBIAN"
+            # ================================
+            # 解压 control.tar.*
+            # 注意：必须解压到 pkgdir
+            # 不要直接解压到 pkgdir/DEBIAN
+            # ================================
 
             case "$control_archive" in
 
@@ -141,7 +123,7 @@ jobs:
                   --no-same-owner \
                   --no-same-permissions \
                   -xf "$control_archive" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar.xz)
@@ -150,7 +132,7 @@ jobs:
                   --no-same-owner \
                   --no-same-permissions \
                   -f "$control_archive" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar.gz|*.tgz)
@@ -159,7 +141,7 @@ jobs:
                   --no-same-owner \
                   --no-same-permissions \
                   -f "$control_archive" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar.bz2|*.tbz2)
@@ -168,25 +150,27 @@ jobs:
                   --no-same-owner \
                   --no-same-permissions \
                   -f "$control_archive" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar.lz4)
                 lz4 -d "$control_archive" "$tmpdir/control.tar"
+
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
                   -xf "$tmpdir/control.tar" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar.lzma)
                 lzma -dc "$control_archive" > "$tmpdir/control.tar"
+
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
                   -xf "$tmpdir/control.tar" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *.tar)
@@ -194,21 +178,23 @@ jobs:
                   --no-same-owner \
                   --no-same-permissions \
                   -xf "$control_archive" \
-                  -C "$pkgdir/DEBIAN"
+                  -C "$pkgdir"
                 ;;
 
               *)
                 echo "ERROR: 不支持的 control archive:"
                 echo "$control_archive"
+
                 rm -rf "$tmpdir"
                 exit 1
                 ;;
 
             esac
 
-            #
-            # 解包 data
-            #
+            # ================================
+            # 解压 data.tar.*
+            # ================================
+
             case "$data_archive" in
 
               *.tar.zst)
@@ -249,6 +235,7 @@ jobs:
 
               *.tar.lz4)
                 lz4 -d "$data_archive" "$tmpdir/data.tar"
+
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
@@ -258,6 +245,7 @@ jobs:
 
               *.tar.lzma)
                 lzma -dc "$data_archive" > "$tmpdir/data.tar"
+
                 sudo tar \
                   --no-same-owner \
                   --no-same-permissions \
@@ -276,60 +264,92 @@ jobs:
               *)
                 echo "ERROR: 不支持的 data archive:"
                 echo "$data_archive"
+
                 rm -rf "$tmpdir"
                 exit 1
                 ;;
 
             esac
 
-            #
-            # 修复所有权
-            #
+            # ================================
+            # 修复权限
+            # ================================
+
             sudo chown -R "$(id -u):$(id -g)" "$pkgdir"
 
-            control="$pkgdir/DEBIAN/control"
+            # ================================
+            # 找 control
+            # ================================
 
-            if [ ! -f "$control" ]; then
+            control=""
+
+            if [ -f "$pkgdir/DEBIAN/control" ]; then
+              control="$pkgdir/DEBIAN/control"
+            elif [ -f "$pkgdir/control" ]; then
+              mkdir -p "$pkgdir/DEBIAN"
+              mv "$pkgdir/control" "$pkgdir/DEBIAN/control"
+              control="$pkgdir/DEBIAN/control"
+            fi
+
+            if [ -z "$control" ]; then
+
+              echo ""
+              echo "========================================"
               echo "ERROR: 找不到 DEBIAN/control"
+              echo "文件: $name"
+              echo "========================================"
+              echo ""
+
+              echo "当前解压后的目录:"
+              find "$pkgdir" -maxdepth 4 -type f -print | sort
+
+              echo ""
+
+              echo "control archive 内部:"
+              tar -tJf "$control_archive" 2>/dev/null || true
+
+              echo ""
+
               rm -rf "$tmpdir"
               exit 1
             fi
 
-            #
+            echo "找到 control: $control"
+
+            # ================================
             # 修复 control 权限
-            #
+            # ================================
+
             chmod 644 "$control"
 
-            #
-            # 确保 control 最后一行有换行
-            #
+            # 确保最后有换行
             sed -i -e '$a\' "$control"
 
-            #
-            # 删除第三方跳转页面
-            #
+            # ================================
+            # 删除第三方源信息
+            # ================================
+
             sed -i '/^[Dd]epiction:/d' "$control"
             sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
             sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
             sed -i '/^[Hh]omepage:/d' "$control"
 
-            #
+            # ================================
             # 统一 Section
-            #
+            # ================================
+
             if grep -qi '^Section:' "$control"; then
               sed -i 's/^Section:.*/Section: 插件/' "$control"
             else
               printf 'Section: 插件\n' >> "$control"
             fi
 
-            #
-            # 再次确保换行
-            #
             sed -i -e '$a\' "$control"
 
-            #
-            # 修复 Debian 维护脚本权限
-            #
+            # ================================
+            # 修复维护脚本权限
+            # ================================
+
             if [ -d "$pkgdir/DEBIAN" ]; then
 
               for script in \
@@ -347,9 +367,10 @@ jobs:
 
             fi
 
-            #
+            # ================================
             # 重新打包
-            #
+            # ================================
+
             rm -f "$output"
 
             dpkg-deb \
