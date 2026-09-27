@@ -14,83 +14,263 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # ========================================
+      # 1. 获取仓库
+      # ========================================
+
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      # ========================================
+      # 2. 安装工具
+      # ========================================
 
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev binutils zstd xz-utils gzip bzip2 lz4 lzma
+          sudo apt-get install -y \
+            dpkg-dev \
+            binutils \
+            zstd \
+            xz-utils \
+            gzip \
+            bzip2 \
+            lz4 \
+            lzma
 
-      - name: Clean and rebuild DEB packages
+
+      # ========================================
+      # 3. 处理所有 DEB
+      # ========================================
+
+      - name: Rebuild DEB packages
         shell: bash
         run: |
           set -Eeuo pipefail
 
           export SOURCE_DATE_EPOCH=0
 
-          rm -rf work repo
-          mkdir -p work repo/debs
+          rm -rf work
+          rm -rf repo
+
+          mkdir -p work
+          mkdir -p repo/debs
+
+
+          # ----------------------------------------
+          # 查找压缩包
+          # ----------------------------------------
+
+          extract_archive() {
+
+            archive="$1"
+            destination="$2"
+
+            case "$archive" in
+
+              *.tar.zst)
+
+                tar \
+                  --zstd \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$archive" \
+                  -C "$destination"
+
+                ;;
+
+              *.tar.xz)
+
+                tar \
+                  -xJ \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$archive" \
+                  -C "$destination"
+
+                ;;
+
+              *.tar.gz|*.tgz)
+
+                tar \
+                  -xz \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$archive" \
+                  -C "$destination"
+
+                ;;
+
+              *.tar.bz2|*.tbz2)
+
+                tar \
+                  -xj \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -f "$archive" \
+                  -C "$destination"
+
+                ;;
+
+              *.tar.lz4)
+
+                temp_tar="$(mktemp)"
+
+                lz4 \
+                  -d \
+                  "$archive" \
+                  "$temp_tar"
+
+                tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$temp_tar" \
+                  -C "$destination"
+
+                rm -f "$temp_tar"
+
+                ;;
+
+              *.tar.lzma)
+
+                temp_tar="$(mktemp)"
+
+                lzma \
+                  -dc \
+                  "$archive" \
+                  > "$temp_tar"
+
+                tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$temp_tar" \
+                  -C "$destination"
+
+                rm -f "$temp_tar"
+
+                ;;
+
+              *.tar)
+
+                tar \
+                  --no-same-owner \
+                  --no-same-permissions \
+                  -xf "$archive" \
+                  -C "$destination"
+
+                ;;
+
+              *)
+
+                echo ""
+                echo "ERROR: 不支持的 archive:"
+                echo "$archive"
+                echo ""
+
+                return 1
+
+                ;;
+
+            esac
+          }
+
+
+          # ----------------------------------------
+          # 遍历 DEB
+          # ----------------------------------------
 
           while IFS= read -r -d '' deb; do
 
             name="$(basename "$deb")"
+
             pkgdir="work/${name%.deb}"
+
             output="repo/debs/$name"
 
+            tmpdir="$(mktemp -d)"
+
+
+            echo ""
             echo "========================================"
             echo "处理: $name"
             echo "========================================"
 
+
             rm -rf "$pkgdir"
+
             mkdir -p "$pkgdir"
 
-            tmpdir="$(mktemp -d)"
+
+            # ----------------------------------------
+            # 解包 DEB
+            # ----------------------------------------
 
             ar x "$deb" --output "$tmpdir"
 
+
+            echo ""
             echo "DEB 内部文件:"
+
             ls -lah "$tmpdir"
+
+
+            # ----------------------------------------
+            # 查找 control archive
+            # ----------------------------------------
 
             control_archive=""
 
             for f in \
-              "$tmpdir"/control.tar.* \
+              "$tmpdir"/control.tar.zst \
+              "$tmpdir"/control.tar.xz \
+              "$tmpdir"/control.tar.gz \
+              "$tmpdir"/control.tar.bz2 \
+              "$tmpdir"/control.tar.lz4 \
+              "$tmpdir"/control.tar.lzma \
               "$tmpdir"/control.tar; do
 
               if [ -f "$f" ]; then
+
                 control_archive="$f"
+
                 break
+
               fi
 
             done
+
+
+            # ----------------------------------------
+            # 查找 data archive
+            # ----------------------------------------
 
             data_archive=""
 
             for f in \
-              "$tmpdir"/data.tar.* \
+              "$tmpdir"/data.tar.zst \
+              "$tmpdir"/data.tar.xz \
+              "$tmpdir"/data.tar.gz \
+              "$tmpdir"/data.tar.bz2 \
+              "$tmpdir"/data.tar.lz4 \
+              "$tmpdir"/data.tar.lzma \
               "$tmpdir"/data.tar; do
 
               if [ -f "$f" ]; then
+
                 data_archive="$f"
+
                 break
+
               fi
 
             done
 
-            if [ -z "$data_archive" ]; then
 
-              echo ""
-              echo "========================================"
-              echo "ERROR: 找不到 data.tar.*"
-              echo "文件: $name"
-              echo "========================================"
-
-              ar t "$deb"
-
-              rm -rf "$tmpdir"
-              exit 1
-            fi
+            # ----------------------------------------
+            # 检查 control
+            # ----------------------------------------
 
             if [ -z "$control_archive" ]; then
 
@@ -103,275 +283,299 @@ jobs:
               ar t "$deb"
 
               rm -rf "$tmpdir"
+
               exit 1
+
             fi
 
+
+            # ----------------------------------------
+            # 检查 data
+            # ----------------------------------------
+
+            if [ -z "$data_archive" ]; then
+
+              echo ""
+              echo "========================================"
+              echo "ERROR: 找不到 data.tar.*"
+              echo "文件: $name"
+              echo "========================================"
+
+              ar t "$deb"
+
+              rm -rf "$tmpdir"
+
+              exit 1
+
+            fi
+
+
+            echo ""
             echo "control archive: $(basename "$control_archive")"
             echo "data archive:    $(basename "$data_archive")"
 
-            # ================================
-            # 解压 control.tar.*
-            # 注意：必须解压到 pkgdir
-            # 不要直接解压到 pkgdir/DEBIAN
-            # ================================
 
-            case "$control_archive" in
+            # ----------------------------------------
+            # 单独解压 control
+            #
+            # 不直接假设内部结构
+            # ----------------------------------------
 
-              *.tar.zst)
-                sudo tar \
-                  --zstd \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$control_archive" \
-                  -C "$pkgdir"
-                ;;
+            control_dir="$tmpdir/control"
 
-              *.tar.xz)
-                sudo tar \
-                  -xJ \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$control_archive" \
-                  -C "$pkgdir"
-                ;;
+            mkdir -p "$control_dir"
 
-              *.tar.gz|*.tgz)
-                sudo tar \
-                  -xz \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$control_archive" \
-                  -C "$pkgdir"
-                ;;
 
-              *.tar.bz2|*.tbz2)
-                sudo tar \
-                  -xj \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$control_archive" \
-                  -C "$pkgdir"
-                ;;
+            extract_archive \
+              "$control_archive" \
+              "$control_dir"
 
-              *.tar.lz4)
-                lz4 -d "$control_archive" "$tmpdir/control.tar"
 
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$tmpdir/control.tar" \
-                  -C "$pkgdir"
-                ;;
+            echo ""
+            echo "control.tar 解压结果:"
 
-              *.tar.lzma)
-                lzma -dc "$control_archive" > "$tmpdir/control.tar"
+            find "$control_dir" \
+              -maxdepth 4 \
+              -print \
+              2>/dev/null || true
 
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$tmpdir/control.tar" \
-                  -C "$pkgdir"
-                ;;
 
-              *.tar)
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$control_archive" \
-                  -C "$pkgdir"
-                ;;
+            # ----------------------------------------
+            # 创建 DEBIAN
+            # ----------------------------------------
 
-              *)
-                echo "ERROR: 不支持的 control archive:"
-                echo "$control_archive"
+            mkdir -p "$pkgdir/DEBIAN"
 
-                rm -rf "$tmpdir"
-                exit 1
-                ;;
 
-            esac
+            # ----------------------------------------
+            # 查找真正的 control 文件
+            # ----------------------------------------
 
-            # ================================
-            # 解压 data.tar.*
-            # ================================
+            control_source=""
 
-            case "$data_archive" in
 
-              *.tar.zst)
-                sudo tar \
-                  --zstd \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$data_archive" \
-                  -C "$pkgdir"
-                ;;
+            # 第一优先级：
+            # DEBIAN/control
 
-              *.tar.xz)
-                sudo tar \
-                  -xJ \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$data_archive" \
-                  -C "$pkgdir"
-                ;;
+            if [ -f "$control_dir/DEBIAN/control" ]; then
 
-              *.tar.gz|*.tgz)
-                sudo tar \
-                  -xz \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$data_archive" \
-                  -C "$pkgdir"
-                ;;
+              control_source="$control_dir/DEBIAN/control"
 
-              *.tar.bz2|*.tbz2)
-                sudo tar \
-                  -xj \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -f "$data_archive" \
-                  -C "$pkgdir"
-                ;;
 
-              *.tar.lz4)
-                lz4 -d "$data_archive" "$tmpdir/data.tar"
+            # 第二：
+            # ./control
 
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$tmpdir/data.tar" \
-                  -C "$pkgdir"
-                ;;
+            elif [ -f "$control_dir/control" ]; then
 
-              *.tar.lzma)
-                lzma -dc "$data_archive" > "$tmpdir/data.tar"
+              control_source="$control_dir/control"
 
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$tmpdir/data.tar" \
-                  -C "$pkgdir"
-                ;;
 
-              *.tar)
-                sudo tar \
-                  --no-same-owner \
-                  --no-same-permissions \
-                  -xf "$data_archive" \
-                  -C "$pkgdir"
-                ;;
+            # 第三：
+            # 任意目录下的 control
 
-              *)
-                echo "ERROR: 不支持的 data archive:"
-                echo "$data_archive"
+            else
 
-                rm -rf "$tmpdir"
-                exit 1
-                ;;
+              control_source="$(
+                find "$control_dir" \
+                  -type f \
+                  -name control \
+                  -print \
+                  -quit \
+                  2>/dev/null || true
+              )"
 
-            esac
-
-            # ================================
-            # 修复权限
-            # ================================
-
-            sudo chown -R "$(id -u):$(id -g)" "$pkgdir"
-
-            # ================================
-            # 找 control
-            # ================================
-
-            control=""
-
-            if [ -f "$pkgdir/DEBIAN/control" ]; then
-              control="$pkgdir/DEBIAN/control"
-            elif [ -f "$pkgdir/control" ]; then
-              mkdir -p "$pkgdir/DEBIAN"
-              mv "$pkgdir/control" "$pkgdir/DEBIAN/control"
-              control="$pkgdir/DEBIAN/control"
             fi
 
-            if [ -z "$control" ]; then
+
+            # ----------------------------------------
+            # control 不存在
+            # ----------------------------------------
+
+            if [ -z "$control_source" ] || [ ! -f "$control_source" ]; then
 
               echo ""
               echo "========================================"
-              echo "ERROR: 找不到 DEBIAN/control"
+              echo "ERROR: control.tar 中找不到 control"
               echo "文件: $name"
               echo "========================================"
-              echo ""
-
-              echo "当前解压后的目录:"
-              find "$pkgdir" -maxdepth 4 -type f -print | sort
 
               echo ""
+              echo "control.tar 内容:"
 
-              echo "control archive 内部:"
-              tar -tJf "$control_archive" 2>/dev/null || true
-
-              echo ""
+              find "$control_dir" \
+                -maxdepth 6 \
+                -print \
+                2>/dev/null || true
 
               rm -rf "$tmpdir"
+
               exit 1
+
             fi
 
-            echo "找到 control: $control"
 
-            # ================================
-            # 修复 control 权限
-            # ================================
+            echo ""
+            echo "找到 control:"
+            echo "$control_source"
+
+
+            # ----------------------------------------
+            # 复制 control
+            # ----------------------------------------
+
+            cp \
+              "$control_source" \
+              "$pkgdir/DEBIAN/control"
+
+
+            # ----------------------------------------
+            # 解压 data
+            # ----------------------------------------
+
+            extract_archive \
+              "$data_archive" \
+              "$pkgdir"
+
+
+            # ----------------------------------------
+            # 修复所有权
+            # ----------------------------------------
+
+            sudo chown \
+              -R \
+              "$(id -u):$(id -g)" \
+              "$pkgdir" \
+              || true
+
+
+            # ----------------------------------------
+            # 修复基本权限
+            # ----------------------------------------
+
+            chmod -R u+rwX "$pkgdir" || true
+
+
+            # ----------------------------------------
+            # 确认 control
+            # ----------------------------------------
+
+            control="$pkgdir/DEBIAN/control"
+
+
+            if [ ! -f "$control" ]; then
+
+              echo ""
+              echo "========================================"
+              echo "ERROR: 无法创建 DEBIAN/control"
+              echo "文件: $name"
+              echo "========================================"
+
+              rm -rf "$tmpdir"
+
+              exit 1
+
+            fi
+
+
+            # ----------------------------------------
+            # control 权限
+            # ----------------------------------------
 
             chmod 644 "$control"
 
+
+            # ----------------------------------------
             # 确保最后有换行
+            # ----------------------------------------
+
             sed -i -e '$a\' "$control"
 
-            # ================================
+
+            # ----------------------------------------
             # 删除第三方源信息
-            # ================================
+            # ----------------------------------------
 
             sed -i '/^[Dd]epiction:/d' "$control"
+
             sed -i '/^[Ss]ileo[Dd]epiction:/d' "$control"
+
             sed -i '/^[Nn]ative[Dd]epiction:/d' "$control"
+
             sed -i '/^[Hh]omepage:/d' "$control"
 
-            # ================================
-            # 统一 Section
-            # ================================
+
+            # ----------------------------------------
+            # Section 统一为 插件
+            # ----------------------------------------
 
             if grep -qi '^Section:' "$control"; then
-              sed -i 's/^Section:.*/Section: 插件/' "$control"
+
+              sed -i \
+                's/^Section:.*/Section: 插件/' \
+                "$control"
+
             else
+
               printf 'Section: 插件\n' >> "$control"
+
             fi
+
+
+            # ----------------------------------------
+            # 再次确保 newline
+            # ----------------------------------------
 
             sed -i -e '$a\' "$control"
 
-            # ================================
+
+            # ----------------------------------------
             # 修复维护脚本权限
-            # ================================
+            # ----------------------------------------
 
-            if [ -d "$pkgdir/DEBIAN" ]; then
+            for script in \
+              preinst \
+              postinst \
+              prerm \
+              postrm \
+              config; do
 
-              for script in \
-                preinst \
-                postinst \
-                prerm \
-                postrm \
-                config; do
+              if [ -f "$pkgdir/DEBIAN/$script" ]; then
 
-                if [ -f "$pkgdir/DEBIAN/$script" ]; then
-                  chmod 755 "$pkgdir/DEBIAN/$script"
-                fi
+                chmod 755 \
+                  "$pkgdir/DEBIAN/$script"
 
-              done
+              fi
+
+            done
+
+
+            # ----------------------------------------
+            # 删除可能存在的错误 control 文件
+            # ----------------------------------------
+
+            if [ -f "$pkgdir/control" ]; then
+
+              rm -f "$pkgdir/control"
 
             fi
 
-            # ================================
+
+            # ----------------------------------------
+            # 检查 control 内容
+            # ----------------------------------------
+
+            echo ""
+            echo "最终 control:"
+
+            cat "$control"
+
+
+            # ----------------------------------------
             # 重新打包
-            # ================================
+            # ----------------------------------------
 
             rm -f "$output"
+
 
             dpkg-deb \
               --build \
@@ -379,16 +583,31 @@ jobs:
               "$pkgdir" \
               "$output"
 
-            echo "完成: $output"
+
+            echo ""
+            echo "完成:"
+            echo "$output"
+
+
+            # ----------------------------------------
+            # 清理临时文件
+            # ----------------------------------------
 
             rm -rf "$tmpdir"
 
           done < <(
-            find . -type f -name '*.deb' \
+            find . \
+              -type f \
+              -name '*.deb' \
               -not -path './repo/*' \
               -not -path './work/*' \
               -print0
           )
+
+
+      # ========================================
+      # 4. 创建 Packages
+      # ========================================
 
       - name: Build Packages index
         shell: bash
@@ -397,9 +616,22 @@ jobs:
 
           cd repo
 
-          dpkg-scanpackages -m debs /dev/null > Packages
+          dpkg-scanpackages \
+            -m \
+            debs \
+            /dev/null \
+            > Packages
 
-          gzip -9 -n -f Packages
+          gzip \
+            -9 \
+            -n \
+            -f \
+            Packages
+
+
+      # ========================================
+      # 5. 创建 Release
+      # ========================================
 
       - name: Create Release
         shell: bash
@@ -419,15 +651,30 @@ jobs:
           Description: Qing iOS Jailbreak Repository
           EOF
 
+
+      # ========================================
+      # 6. 创建 .nojekyll
+      # ========================================
+
       - name: Create .nojekyll
         run: |
           touch repo/.nojekyll
+
+
+      # ========================================
+      # 7. 复制图标
+      # ========================================
 
       - name: Copy CydiaIcon
         run: |
           if [ -f CydiaIcon.png ]; then
             cp CydiaIcon.png repo/CydiaIcon.png
           fi
+
+
+      # ========================================
+      # 8. 验证 Packages
+      # ========================================
 
       - name: Verify package sizes
         shell: bash
@@ -436,20 +683,35 @@ jobs:
 
           cd repo
 
-          gzip -dc Packages.gz > Packages
+          gzip \
+            -dc \
+            Packages.gz \
+            > Packages
+
 
           python3 - <<'PY'
+
           import os
           import re
 
-          with open("Packages", "r", encoding="utf-8", errors="replace") as f:
+
+          with open(
+              "Packages",
+              "r",
+              encoding="utf-8",
+              errors="replace"
+          ) as f:
+
               data = f.read()
 
+
           entries = data.strip().split("\n\n")
+
 
           total = 0
           checked = 0
           failed = 0
+
 
           for entry in entries:
 
@@ -459,45 +721,105 @@ jobs:
                   re.MULTILINE
               )
 
+
               size = re.search(
                   r"^Size:\s*(\d+)$",
                   entry,
                   re.MULTILINE
               )
 
+
               if not filename or not size:
+
                   continue
+
 
               total += 1
 
+
               path = filename.group(1).strip()
-              expected = int(size.group(1))
+
+              expected = int(
+                  size.group(1)
+              )
+
 
               if not os.path.isfile(path):
-                  print("ERROR: 文件不存在:", path)
+
+                  print(
+                      "ERROR: 文件不存在:",
+                      path
+                  )
+
                   failed += 1
+
                   continue
 
+
               actual = os.path.getsize(path)
+
               checked += 1
 
+
               if actual != expected:
-                  print("ERROR:", path)
-                  print("Expected:", expected)
-                  print("Actual:  ", actual)
+
+                  print(
+                      "ERROR:",
+                      path
+                  )
+
+                  print(
+                      "Expected:",
+                      expected
+                  )
+
+                  print(
+                      "Actual:",
+                      actual
+                  )
+
                   failed += 1
 
-          print("========================================")
-          print("Packages 条目:", total)
-          print("实际检查:", checked)
-          print("错误:", failed)
-          print("========================================")
+
+          print(
+              "========================================"
+          )
+
+          print(
+              "Packages 条目:",
+              total
+          )
+
+          print(
+              "实际检查:",
+              checked
+          )
+
+          print(
+              "错误:",
+              failed
+          )
+
+          print(
+              "========================================"
+          )
+
 
           if failed:
+
               raise SystemExit(1)
 
-          print("所有软件包大小验证通过")
+
+          print(
+              "所有软件包大小验证通过"
+          )
+
           PY
+
+
+      # ========================================
+      # 9. 部署 GitHub Pages
+      # ========================================
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
