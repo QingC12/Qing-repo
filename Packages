@@ -970,6 +970,29 @@ Description: 支持录屏/截图套壳，水印以及区域截图、长截图等
 Author: iosdump
 Name: SHELLX
 
+Package: com.jaysuen.evocenter
+Version: 2.5.0-beta.2
+Architecture: iphoneos-arm64e
+Maintainer: chatgpt5.6（sol）, JaySuen
+Installed-Size: 11068
+Depends: mobilesubstrate, com.opa334.ccsupport
+Conflicts: com.jaysuen.ccflex16
+Replaces: com.jaysuen.ccflex16
+Filename: debs/com.jaysuen.evocenter_2.5.0-beta.2_arm64e.deb
+Size: 373298
+MD5sum: 462a0c8c38df44c1e8e84d9feeb93c1e
+SHA1: c89332f69bb0e78e90616cf773d7deadc32a2f16
+SHA256: d36173441865ef07c5b640c6745ab13bdc42502c51ef49591d5f8a148f5ae32e
+Section: 插件
+Description: 为旧系统带来类似ios18的现代化控制中心体验。
+ 调节模块尺寸、自定义圆角大小和控制中心背景透明度。
+ 支持iOS16.0-16.6、iOS 17.0-17.4，其他系统版本自行测试。
+ 反馈Bug和建议：在酷安 App 搜索 JAYSuen私信我，或搜索 Evo Center 找到最新帖子评论。
+ 向ccborder16、horizontalsliders、bettercc致敬，感謝其设计与实现带来的启发。
+Author: chatgpt5.6（sol）, JaySuen
+Icon: https://eleveny123.github.io/EvoCenter/assets/icon.png
+Name: Evo Center
+
 Package: com.jontelang.snapper3
 Version: 1.2.1
 Architecture: iphoneos-arm64e
