@@ -993,6 +993,23 @@ Author: chatgpt5.6（sol）, JaySuen
 Icon: https://eleveny123.github.io/EvoCenter/assets/icon.png
 Name: Evo Center
 
+Package: com.jl.liquidglass
+Version: 0.1.6.56
+Architecture: iphoneos-arm64e
+Maintainer: jl
+Installed-Size: 5936
+Depends: mobilesubstrate (>= 0.9.5000), firmware (>= 14.0), preferenceloader
+Filename: debs/com.jl.liquidglass_0.1.6.56_arm64_iphoneos-arm64e.deb
+Size: 2257264
+MD5sum: 195dff94d8a80fe52b0b6e781fdb1d15
+SHA1: df09878629e891c4513d37df77c8eb125cff1487
+SHA256: 58297295a343eea9bfe03f542a4c07098b93e002c45d2ac1fc63c0593da709b4
+Section: 插件
+Description: 仿iOS26液态玻璃效果，支持锁屏、控制中心、通知中心、标签栏、0耗电（听说效果还不错，没用过）
+Author: jl
+Icon: https://winaviation.github.io/repo/depictions/jl.liquidass/icon.png
+Name: 58 液态玻璃
+
 Package: com.jontelang.snapper3
 Version: 1.2.1
 Architecture: iphoneos-arm64e
@@ -1366,6 +1383,22 @@ Section: 插件
 Priority: optional
 Description: 后台增强优化网络
 Author: 后台增强优化网络
+Name: 后台网络
+
+Package: com.rlpndlp.shiyue
+Version: 5.0
+Architecture: iphoneos-arm64
+Maintainer: 增强优化
+Depends: firmware (>= 14.0), mobilesubstrate, preferenceloader
+Filename: debs/终极优化完结.deb
+Size: 3482
+MD5sum: 8e616ed6408de6f5e5ca5020a288075c
+SHA1: 95a32f7c61683ac74748ff7e28ae73493a07942a
+SHA256: d339c38b12dc0bac2b0feec4dc950ac319022f8aa86d2bad3c479e8d4b52b885
+Section: 插件
+Priority: optional
+Description: 后台增强优化网络手动注销或者重启用户空间
+Author: 后台增强优化网络手动注销或者重启用户空间
 Name: 后台网络
 
 Package: com.roothide.manager
