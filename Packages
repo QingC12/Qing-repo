@@ -1976,6 +1976,134 @@ Author: lenglengyu
 Icon: https://TrollStoreX.Github.io/sileodepiction/VideoAdsSpeed/icon.png
 Name: 快速跳过广告 VideoAdsSpeed
 
+Package: com.zero.123panclean.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 96
+Depends: mobilesubstrate
+Filename: debs/123PanClean_rootless.deb
+Size: 19900
+MD5sum: ec8fe6d993f917e0abd6c48898a2c30e
+SHA1: 0de592a750fabf910892db4e68d1e5045578b62e
+SHA256: 599f9ad7105c457e288f8c0eeeb9c46d081c0d185f4cd82082066b78b5d4fa0c
+Section: 插件
+Description: 123云盘去广告 + 启动加速 + 屏蔽更新/巨魔/越狱
+Author: Zero
+Name: 123PanClean
+
+Package: com.zero.alipayadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 92
+Depends: mobilesubstrate
+Filename: debs/AlipayAdBlock_rootless.deb
+Size: 19484
+MD5sum: e121aad2b35eadbad4d3a0d4c42ca5d9
+SHA1: adbfc7d2ac3a47c2cced1b74859f508cde4b7085
+SHA256: f4281cccf665775f751f1b8fe094062c2a31f3929b2a418b33a2add7c34e2a7a
+Section: 插件
+Description: 支付宝去广告 + 隐藏理财 tab + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: AlipayAdBlock
+
+Package: com.zero.fqxsadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 108
+Depends: mobilesubstrate
+Filename: debs/FQXSAdBlock_rootless.deb
+Size: 21430
+MD5sum: 7a9ee9e41e2c49220bf48decd25fcbd5
+SHA1: d5157934d999e796393a5b4a083fd60bd28541a1
+SHA256: e3fe205fa5206c13b021e3f6a1c8381c2ca931f0c6bd2c05e0aa2623dcd6ddb9
+Section: 插件
+Description: 番茄小说去广告 + 精简底部 + 本地VIP + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: FQXSAdBlock
+
+Package: com.zero.jdadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 112
+Depends: mobilesubstrate
+Filename: debs/JDAdBlock_rootless.deb
+Size: 25914
+MD5sum: 7272fc94b9e50b151b17d35b4636dda3
+SHA1: f629cde941d4970af1d79acc9a0a16c6afc700cd
+SHA256: df76d66a133eb0d36c3abfeca2c1f48e1578ac295330badbe458101f9be87d53
+Section: 插件
+Description: 京东去广告 + 启动加速 + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: JDAdBlock
+
+Package: com.zero.pddadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 112
+Depends: mobilesubstrate
+Filename: debs/PDDAdBlock_rootless.deb
+Size: 24686
+MD5sum: 6784d33e0103aac9359c12d5cc9dcd23
+SHA1: 75eee2fee1a4c6e0b425b480a8cf9aac62d72052
+SHA256: 5cd26fdc611e342a3bde1997e17e7e03a8983982eff5f445e72756dc62503b20
+Section: 插件
+Description: 拼多多去广告 + 屏蔽更新/巨魔/越狱
+Author: Zero
+Name: PDDAdBlock
+
+Package: com.zero.qdreaderadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 144
+Depends: mobilesubstrate
+Filename: debs/QDReaderAdBlock_rootless.deb
+Size: 37128
+MD5sum: c38dd2be9e4a81f1329b14b7a4c5dbb3
+SHA1: c2ecf88ef5b58a1d88f241856ecaab8ebea58b6f
+SHA256: 9dcd74ac9e42a3fdd2bfae0fe7c21b8cc40b48c800974fa0e15ee321db40130d
+Section: 插件
+Description: 起点读书去广告 + 启动页颜色 + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: QDReaderAdBlock
+
+Package: com.zero.qmxsadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 92
+Depends: mobilesubstrate
+Filename: debs/QMXSAdBlock_rootless.deb
+Size: 18740
+MD5sum: a8cff32b0256c8d8d706fd62708259fa
+SHA1: e8dbcb5def84cb9d917efcd8c06bff4745efba18
+SHA256: 037c3ae65732dd8fc96b664d7b7e5d2ed68c2cbc5fce829f4ca20824c76c7dd1
+Section: 插件
+Description: 七猫免费小说去广告 + VIP + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: QMXSAdBlock
+
+Package: com.zero.taobaoadblock.rootless
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Maintainer: Zero
+Installed-Size: 112
+Depends: mobilesubstrate
+Filename: debs/TaobaoAdBlock_rootless.deb
+Size: 25454
+MD5sum: 9e1cf7abb88c452ad415ea5c2ea31ee4
+SHA1: f673966674043d983cbd30cb4c44626045d99ff2
+SHA256: 9be79391204b5436b5b22c72bd111a368f69dc89d70780700de4b41c847d988c
+Section: 插件
+Description: 淘宝去广告 + 启动加速 + 屏蔽更新/巨魔/越狱（一版通吃）
+Author: Zero
+Name: TaobaoAdBlock
+
 Package: com.zuner.lunanoad
 Version: 1.5
 Architecture: iphoneos-arm64e
