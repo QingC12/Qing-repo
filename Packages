@@ -1746,23 +1746,6 @@ Dev: kanuo
 Icon: https://jimkanuo.github.io/apt-repo/icon/snapbackup.png
 Name: SnapBackup 备份恢复
 
-Package: com.susudear.screencore
-Version: 1.1.8
-Architecture: iphoneos-arm64e
-Maintainer: SuSu
-Installed-Size: 2836
-Depends: mobilesubstrate, preferenceloader, com.opa334.altlist
-Filename: debs/com.susudear.screencore_1.1.8_iphoneos-arm64e.deb
-Size: 507892
-MD5sum: 67fb3e65568e43f4415c570f8d5eccd8
-SHA1: 706c198243d75a7e5d916e28aa90c43cfaf74f5d
-SHA256: 2d9a9eb0b75da4e065683a5b508c9e24fea05c5fb3234e85855cf0ec59963d17
-Section: 插件
-Description: ScreenCore 分屏工具（免授权）。分屏而已。
-Author: SuSu
-Icon: https://repo.susubaby.cn/icons/ScreenCore.png
-Name: ScreenCore分屏
-
 Package: com.tigisoftware.filza64bit
 Version: 4.0.1-4~roothide
 Architecture: iphoneos-arm64e
@@ -2008,6 +1991,22 @@ Description: 支付宝去广告 + 隐藏理财 tab + 屏蔽更新/巨魔/越狱�
 Author: Zero
 Name: AlipayAdBlock
 
+Package: com.zero.amapadblock
+Version: 3.4.0
+Architecture: iphoneos-arm64e
+Maintainer: zero
+Installed-Size: 176
+Depends: mobilesubstrate (>= 0.9.7100)
+Filename: debs/AmapAdBlock_rootless_arm64e.deb
+Size: 36060
+MD5sum: a42205a983ed41cdfb1e27c8893cf150
+SHA1: 08bf8d73e8b325f824257e34321935ccea485a2c
+SHA256: 2c6184199fd7ae4e72ffc3a7bcf9ba1738c240c4d3d233e3dd7ebc71bc568ce8
+Section: 插件
+Description: 过滤高德地图开屏广告与各页面推广（Loon 规则转 deb，JSCore 原样执行）
+Author: zero
+Name: 高德地图去广告
+
 Package: com.zero.fqxsadblock.rootless
 Version: 1.0.0
 Architecture: iphoneos-arm64
@@ -2039,6 +2038,21 @@ Section: 插件
 Description: 京东去广告 + 启动加速 + 屏蔽更新/巨魔/越狱（一版通吃）
 Author: Zero
 Name: JDAdBlock
+
+Package: com.zero.jdnoads
+Version: 9.2.0
+Architecture: iphoneos-arm64
+Maintainer: zero
+Depends: mobilesubstrate
+Filename: debs/JdNoAds_9.2.0_roothide.deb
+Size: 28672
+MD5sum: af9d18e793a5cd169512622aebb606b7
+SHA1: 9b6b9ccba854c2d62f77d7fb9ea596694db288c3
+SHA256: 1162d8ea064e3744d0ea8a06e119b6e4c5013d8ba72cef7f9f03daf24857def1
+Section: 插件
+Description: 京东去广告 — 拦截 JDAds 广告框架 / 开屏广告 / 各页面广告位
+Author: zero
+Name: JdNoAds
 
 Package: com.zero.pddadblock.rootless
 Version: 1.0.0
@@ -2087,6 +2101,22 @@ Section: 插件
 Description: 七猫免费小说去广告 + VIP + 屏蔽更新/巨魔/越狱（一版通吃）
 Author: Zero
 Name: QMXSAdBlock
+
+Package: com.zero.taobaoadblock
+Version: 4.1.0
+Architecture: iphoneos-arm64
+Maintainer: zero
+Installed-Size: 240
+Depends: mobilesubstrate
+Filename: debs/TaobaoAdBlock.deb
+Size: 39782
+MD5sum: 8d9bbf07bff4ff3dc5e2006a85a6e8b2
+SHA1: 13b4b5b4d282ea68eae0514a42f5fad41c02da5c
+SHA256: 9ed5dcbec9db92dedb5c0328004e827f0af508d95180c1772c13f4a643affbcd
+Section: 插件
+Description: 淘宝去广告 — 开屏广告 / 更新弹窗 / 越狱检测 / 底部 Tab 精简 / 我的页精简
+Author: zero
+Name: TaobaoAdBlock
 
 Package: com.zero.taobaoadblock.rootless
 Version: 1.0.0
